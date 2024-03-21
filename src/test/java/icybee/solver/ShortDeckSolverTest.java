@@ -459,7 +459,7 @@ public class ShortDeckSolverTest
         Map train_config = new HashMap();
         solver.train(train_config);
 
-        String strategy_json = solver.getTree().dumps(false).toJSONString();
+        String strategy_json = solver.getTree().dumps(false).toString(4);
 
         String strategy_fname = "src/test/resources/outputs/outputs_strategy.json";
 
@@ -794,7 +794,7 @@ public class ShortDeckSolverTest
         Map train_config = new HashMap();
         solver.train(train_config);
 
-        String strategy_json = solver.getTree().dumps(false).toJSONString();
+        String strategy_json = solver.getTree().dumps(false).toString(4);
 
         String strategy_fname = "src/test/resources/outputs/outputs_strategy.json";
 

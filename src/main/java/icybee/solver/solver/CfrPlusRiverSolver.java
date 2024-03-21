@@ -1,6 +1,6 @@
 package icybee.solver.solver;
 
-import com.alibaba.fastjson.JSONObject;
+import org.json.JSONObject;
 import icybee.solver.Card;
 import icybee.solver.Deck;
 import icybee.solver.GameTree;
@@ -215,7 +215,7 @@ public class CfrPlusRiverSolver extends Solver{
                     jo.put("iteration",i);
                     jo.put("exploitibility",expliotibility);
                     jo.put("time_ms",time_ms);
-                    fileWriter.write(String.format("%s\n",jo.toJSONString()));
+                    fileWriter.write(String.format("%s\n",jo));
                 }
                 begintime = System.currentTimeMillis();
             }

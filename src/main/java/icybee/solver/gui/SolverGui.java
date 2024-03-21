@@ -7,9 +7,9 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintStream;
-import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.prefs.Preferences;
 
 import icybee.solver.*;
 import icybee.solver.compairer.Compairer;
@@ -18,9 +18,9 @@ import icybee.solver.solver.*;
 import icybee.solver.trainable.CfrPlusTrainable;
 import icybee.solver.trainable.DiscountedCfrTrainable;
 import icybee.solver.utils.PrivateRangeConverter;
-import icybee.solver.utils.Range;
 
 public class SolverGui {
+    private static final String LAST_OPEN_FOLDER = "last_open_folder";
 
     private JPanel mainPanel;
     private JPanel left;
@@ -34,7 +34,7 @@ public class SolverGui {
     private JButton selectBoardCardButton;
     private JButton buildTreeButton;
     private JButton showTreeButton;
-    private JButton showResult;
+    private JButton showResultButton;
     private JTextField raise_limit;
     private JTextField stacks;
     private JComboBox mode;
@@ -70,6 +70,11 @@ public class SolverGui {
     private JCheckBox river_oop_allin;
     private JButton copy;
 
+    private JMenuBar menuBar;
+    private JMenu fileMenu;
+    private JMenuItem loadMenuItem;
+    private JMenuItem saveMenuItem;
+
     private Compairer compairer_holdem = null;
     private Compairer compairer_shortdeck = null;
     private Deck holdem_deck = null;
@@ -77,12 +82,7 @@ public class SolverGui {
     GameTree game_tree;
 
     public static void main(String[] args) {
-        JFrame frame = new JFrame("SolverGui");
-        frame.setContentPane(new SolverGui().mainPanel);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.pack();
-        frame.setVisible(true);
-
+        new SolverGui();
     }
 
     Config loadConfig(String conf_name){
@@ -175,6 +175,19 @@ public class SolverGui {
         return gameTreeBuildingSettings;
     }
 
+    private void saveStrategy(String filename) throws IOException {
+        System.out.println("saving strategy to " + filename);
+
+        String strategy_json = game_tree.dumps(false).toString();
+        File output_file = new File(filename);
+        FileWriter writer = new FileWriter(output_file);
+        writer.write(strategy_json);
+        writer.flush();
+        writer.close();
+
+        System.out.println("save finished!");
+    }
+
     private void onBuildTree(){
         System.out.println("building tree...");
         int mode = this.mode.getSelectedIndex();
@@ -221,16 +234,20 @@ public class SolverGui {
             throw new RuntimeException("game mode unknown");
         }
         System.out.println("build tree complete");
+
+        showTreeButton.setEnabled(true);
+        startSolvingButton.setEnabled(true);
+        showResultButton.setEnabled(true);
     }
 
-    private void initize(){
-        System.out.println("initizing...");
+    private void initialize(){
+        System.out.println("initializing...");
         try {
             load_compairer();
         }catch (java.io.IOException err){
             err.printStackTrace();
         }
-        System.out.println("initization complete");
+        System.out.println("initialization complete");
     }
 
     private void solve() throws Exception{
@@ -293,14 +310,83 @@ public class SolverGui {
     }
 
     public SolverGui() {
+        JFrame frame = new JFrame("SolverGui");
+
+        menuBar = new JMenuBar();
+        fileMenu = new JMenu("File");
+        menuBar.add(fileMenu);
+        loadMenuItem = new JMenuItem("Load");
+        saveMenuItem = new JMenuItem("Save");
+        fileMenu.add(loadMenuItem);
+        fileMenu.add(saveMenuItem);
+
+        frame.setJMenuBar(menuBar);
+        frame.setContentPane(mainPanel);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.pack();
+        frame.setVisible(true);
+
         PrintStream printStream = new PrintStream(new CustomOutputStream(this.log));
         System.setOut(printStream);
         System.setErr(printStream);
 
+        loadMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser fileChooser = new JFileChooser();
+                File workingDirectory = new File(System.getProperty("user.dir"));
+                fileChooser.setCurrentDirectory(workingDirectory);
+                int result = fileChooser.showOpenDialog(frame);
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    JOptionPane.showMessageDialog(frame, "Load from: " + fileChooser.getSelectedFile().getAbsolutePath());
+                }
+            }
+        });
+
+        saveMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Preferences prefs = Preferences.userRoot().node(getClass().getName());
+                String lastOpenDirectory = prefs.get(LAST_OPEN_FOLDER, new File(System.getProperty("user.dir")).getAbsolutePath());
+                JFileChooser fileChooser = new JFileChooser(lastOpenDirectory);
+                int result = fileChooser.showSaveDialog(frame);
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    prefs.put(LAST_OPEN_FOLDER, fileChooser.getSelectedFile().getParent());
+
+                    if(game_tree == null) {
+                        JOptionPane.showMessageDialog(frame, "Please build tree first");
+                        return;
+                    }
+
+                    String outputFilename = fileChooser.getSelectedFile().getAbsolutePath();
+                    File outputFile = new File(outputFilename);
+                    if (outputFile.exists()) {
+                        int response = JOptionPane.showConfirmDialog(null, //
+                                "Are you sure you want to overwrite this file?", //
+                                "Confirm", JOptionPane.YES_NO_OPTION, //
+                                JOptionPane.QUESTION_MESSAGE);
+                        if (response != JOptionPane.YES_OPTION) {
+                            return;
+                        }
+                    }
+
+                    new Thread() {
+                        public void run() {
+                            try {
+                                saveStrategy(outputFilename);
+                            } catch (IOException ex) {
+                                ex.printStackTrace();
+                            }
+                        }
+                    }.start();
+                }
+            }
+        });
+
         // run initize
         new Thread(){
             public void run(){
-                initize();
+                initialize();
             }
         }.start();
 
@@ -308,18 +394,20 @@ public class SolverGui {
         buildTreeButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                new Thread(){
+                new Thread() {
                     public void run(){
                         onBuildTree();
                     }
                 }.start();
             }
         });
+
+        startSolvingButton.setEnabled(false);
         startSolvingButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(game_tree == null) {
-                    System.out.println("Please build tree first");
+                    JOptionPane.showMessageDialog(frame, "Please build tree first");
                     return;
                 }
                 new Thread(){
@@ -333,11 +421,12 @@ public class SolverGui {
                 }.start();
             }
         });
+        showTreeButton.setEnabled(false);
         showTreeButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(game_tree == null){
-                    System.out.println("Please build tree first");
+                    JOptionPane.showMessageDialog(frame, "Please build tree first");
                 }else {
                     game_tree.printTree(100);
                 }
@@ -349,11 +438,12 @@ public class SolverGui {
                 log.setText("");
             }
         });
-        showResult.addActionListener(new ActionListener() {
+        showResultButton.setEnabled(false);
+        showResultButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if(game_tree == null) {
-                    System.out.println("Please build tree first");
+                    JOptionPane.showMessageDialog(frame, "Please build tree first");
                     return;
                 }
                 SolverResult sr = new SolverResult(game_tree,game_tree.getRoot(),boardstr.getText());

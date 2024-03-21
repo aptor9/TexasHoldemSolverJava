@@ -20,14 +20,21 @@ public class PrivateRangeConverter {
             }
             float weight = 1;
 
-            one_range = cardstr_arr.get(0);
+            one_range = cardstr_arr.get(0).trim();
             if(cardstr_arr.size() == 2){
-                weight = Float.valueOf(cardstr_arr.get(1));
+                weight = Float.valueOf(cardstr_arr.get(1).trim());
             }
             if(weight == 0)continue;
 
             int range_len = one_range.length();
-            if(range_len == 3){
+            if(range_len == 4){
+                char rank1 = one_range.charAt(0);
+                char rank2 = one_range.charAt(2);
+                int card1 = Card.strCard2int(rank1 + one_range.substring(1, 2));
+                int card2 = Card.strCard2int(rank2 + one_range.substring(3, 4));
+                this_card = new PrivateCards(card1,card2,weight);
+                private_cards.add(this_card);
+            } else if(range_len == 3){
                 if(one_range.charAt(2) == 's'){
                     char rank1 = one_range.charAt(0);
                     char rank2 = one_range.charAt(1);

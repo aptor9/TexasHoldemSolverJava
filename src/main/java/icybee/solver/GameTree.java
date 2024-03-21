@@ -1,6 +1,6 @@
 package icybee.solver;
 
-import com.alibaba.fastjson.JSONObject;
+import org.json.JSONObject;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import icybee.solver.exceptions.ActionNotFoundException;
 import icybee.solver.exceptions.NodeLengthMismatchException;
@@ -862,7 +862,11 @@ public class GameTree {
             if(childrens != null) {
                 retjson.put("childrens", childrens);
             }
-            retjson.put("strategy",one_node.getTrainable().dumps(false));
+            JSONObject strategy = one_node.getTrainable().dumps(false);
+            for(String key : strategy.keySet())
+            {
+                retjson.put(key, strategy.get(key));
+            }
             retjson.put("node_type","action_node");
             return retjson;
 
@@ -889,7 +893,7 @@ public class GameTree {
             }
 
             retjson.put("deal_cards",dealcards);
-            retjson.put("deal_number",dealcards.size());
+            retjson.put("deal_number",dealcards.length());
             retjson.put("node_type","chance_node");
             return retjson;
         }else{

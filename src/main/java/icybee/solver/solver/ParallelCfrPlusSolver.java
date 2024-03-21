@@ -1,6 +1,6 @@
 package icybee.solver.solver;
 
-import com.alibaba.fastjson.JSONObject;
+import org.json.JSONObject;
 import icybee.solver.Card;
 import icybee.solver.Deck;
 import icybee.solver.GameTree;
@@ -243,7 +243,7 @@ public class ParallelCfrPlusSolver extends Solver{
                     jo.put("iteration",i);
                     jo.put("exploitibility",expliotibility);
                     jo.put("time_ms",time_ms);
-                    if(this.logfile != null) fileWriter.write(String.format("%s\n",jo.toJSONString()));
+                    if(this.logfile != null) fileWriter.write(String.format("%s\n",jo));
                 }
                 if (stop_exploitibility > expliotibility) break;
                 //begintime = System.currentTimeMillis();

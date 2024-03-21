@@ -1049,7 +1049,7 @@
                       <text value="Start solving"/>
                     </properties>
                   </component>
-                  <component id="b47b1" class="javax.swing.JButton" binding="showResult">
+                  <component id="b47b1" class="javax.swing.JButton" binding="showResultButton">
                     <constraints border-constraint="East"/>
                     <properties>
                       <autoscrolls value="false"/>
