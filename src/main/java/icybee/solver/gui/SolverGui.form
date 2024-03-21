@@ -65,7 +65,7 @@
                           <component id="b86f0" class="javax.swing.JTextArea" binding="ooprange">
                             <constraints/>
                             <properties>
-                              <text value="AA,KK,AK,AQ,AJ,AT,A9"/>
+                              <text value="7h7c: 0.000544,7s7c: 0.0005411,7s7h: 0.0004361,8c7c: 0.0000219,8d8c: 0.0001247,8h7h: 0.0000644,8h8c: 0.0001296,8h8d: 0.0001163,8s7s: 0.0000374,8s8c: 0.0001378,8s8d: 0.0001221,8s8h: 0.0001264,9d9c: 0.0002698,9h9c: 0.0002735,9h9d: 0.0001392,9s9c: 0.0002807,9s9d: 0.0001398,9s9h: 0.000141,Tc9c: 0.0340659,Td9d: 0.0432435,TdTc: 0.1562214,Th9h: 0.0323162,ThTc: 0.1472748,ThTd: 0.1413341,Ts9s: 0.0348305,TsTc: 0.2199473,TsTd: 0.1813119,TsTh: 0.1626461,JcTc: 0.1386693,JdTd: 0.1005171,JdJc: 0.284592,JhTh: 0.071798,JhJc: 0.310115,JhJd: 0.221116,JsTs: 0.0804195,JsJc: 0.360297,JsJd: 0.139104,JsJh: 0.234388,QcTc: 0.017687,QcJc: 0.2304225,QdTd: 0.0351043,QdJd: 0.2055478,QdQc: 0.5209111,QsTs: 0.022702,QsJs: 0.2096573,QsQc: 0.5228731,QsQd: 0.501228,KdQc: 0.1209271,KdQd: 0.1436962,KdQs: 0.0734941,KhTh: 0.0002738,KhJh: 0.0004361,KhQc: 0.1287322,KhQd: 0.1270374,KhQs: 0.0906923,KhKd: 0.25272,KsQc: 0.148016,KsQd: 0.1224055,KsQs: 0.1216457,KsKd: 0.273394,KsKh: 0.248496,Ac5c: 0.0798602,AcTc: 0.0632033,AcJd: 0.0520225,AcJh: 0.0342382,AcJs: 0.1226496,AcQc: 0.0004962,AcQd: 0.060517,AcQs: 0.0949901,AcKd: 0.067512,AcKh: 0.011648,AcKs: 0.1497522,Ad5d: 0.0752753,Ad8d: 0.0062108,AdTd: 0.1437058,AdJc: 0.0459395,AdJh: 0.0280931,AdJs: 0.1337107,AdQc: 0.0002678,AdQd: 0.0300584,AdQs: 0.0564659,AdKd: 0.0987073,AdKh: 0.008099,AdKs: 0.125504,AdAc: 0.200263"/>
                             </properties>
                           </component>
                         </children>
@@ -99,7 +99,7 @@
                           <component id="4c918" class="javax.swing.JTextArea" binding="iprange">
                             <constraints/>
                             <properties>
-                              <text value="AA,KK,AK,AQ,AJ,AT,A9"/>
+                              <text value="JcTc: 0.37344,JdTd: 0.364104,JhTh: 0.381998,JsTs: 0.389,QcTc: 0.03486,QcJc: 0.3020126,QdTd: 0.034825,QdJd: 0.35834,QsTs: 0.035,QsJs: 0.3039902,KdTd: 0.471844,KdJd: 0.18209,KdQd: 0.576565,KhTh: 0.5156488,KhJh: 0.438087,KsTs: 0.4639526,KsJs: 0.204624,KsQs: 0.562045,Ac3c: 0.03423,Ac4c: 0.3329647,Ac5c: 0.1954,AcTc: 0.5039087,AcJc: 0.6929549,AcQc: 0.167,AcQd: 0.06192,AcQs: 0.0468,Ad3d: 0.03416,Ad4d: 0.2684084,Ad5d: 0.1938116,AdTd: 0.4354142,AdJd: 0.6907757,AdQc: 0.06084,AdQd: 0.223,AdQs: 0.03528,AdAc: 0.9940051"/>
                             </properties>
                           </component>
                         </children>
@@ -142,7 +142,7 @@
                     <constraints/>
                     <properties>
                       <preferredSize width="50" height="20"/>
-                      <text value="2"/>
+                      <text value="3"/>
                     </properties>
                   </component>
                   <component id="ce7ee" class="javax.swing.JLabel">
@@ -162,7 +162,7 @@
                     <properties>
                       <minimumSize width="64" height="30"/>
                       <preferredSize width="64" height="20"/>
-                      <text value="180"/>
+                      <text value="100"/>
                     </properties>
                   </component>
                   <component id="7e662" class="javax.swing.JLabel">
@@ -175,7 +175,7 @@
                     <constraints/>
                     <properties>
                       <preferredSize width="100" height="20"/>
-                      <text value="910"/>
+                      <text value="50"/>
                     </properties>
                   </component>
                   <component id="73415" class="javax.swing.JLabel">
@@ -259,7 +259,7 @@
                                 <constraints/>
                                 <properties>
                                   <preferredSize width="100" height="20"/>
-                                  <text value="52"/>
+                                  <text value="33 67 100"/>
                                 </properties>
                               </component>
                               <component id="d58e" class="javax.swing.JLabel">
@@ -289,7 +289,7 @@
                                 <constraints/>
                                 <properties>
                                   <preferredSize width="100" height="20"/>
-                                  <text value="45"/>
+                                  <text value="50 100"/>
                                 </properties>
                               </component>
                               <component id="b837e" class="javax.swing.JLabel">
@@ -354,7 +354,7 @@
                                 <constraints/>
                                 <properties>
                                   <preferredSize width="100" height="20"/>
-                                  <text value="70"/>
+                                  <text value="50 100"/>
                                 </properties>
                               </component>
                               <component id="63f14" class="javax.swing.JLabel">
@@ -384,7 +384,7 @@
                                 <constraints/>
                                 <properties>
                                   <preferredSize width="100" height="20"/>
-                                  <text value="45"/>
+                                  <text value="50 100"/>
                                 </properties>
                               </component>
                               <component id="74739" class="javax.swing.JLabel">
@@ -430,7 +430,7 @@
                                 <constraints/>
                                 <properties>
                                   <preferredSize width="100" height="20"/>
-                                  <text value="70"/>
+                                  <text value="25 75"/>
                                 </properties>
                               </component>
                               <component id="a651d" class="javax.swing.JLabel">
@@ -478,7 +478,7 @@
                                 <constraints/>
                                 <properties>
                                   <preferredSize width="100" height="20"/>
-                                  <text value="55"/>
+                                  <text value="33 67 100"/>
                                 </properties>
                               </component>
                               <component id="2f0dd" class="javax.swing.JLabel">
@@ -508,7 +508,7 @@
                                 <constraints/>
                                 <properties>
                                   <preferredSize width="100" height="20"/>
-                                  <text value="45"/>
+                                  <text value="50 100"/>
                                 </properties>
                               </component>
                               <component id="896e8" class="javax.swing.JLabel">
@@ -554,7 +554,7 @@
                                 <constraints/>
                                 <properties>
                                   <preferredSize width="100" height="20"/>
-                                  <text value="55"/>
+                                  <text value="25 75"/>
                                 </properties>
                               </component>
                               <component id="b8403" class="javax.swing.JLabel">
@@ -638,7 +638,7 @@
                                 <constraints/>
                                 <properties>
                                   <preferredSize width="100" height="20"/>
-                                  <text value="52"/>
+                                  <text value="33 67 100"/>
                                 </properties>
                               </component>
                               <component id="be21b" class="javax.swing.JLabel">
@@ -668,7 +668,7 @@
                                 <constraints/>
                                 <properties>
                                   <preferredSize width="100" height="20"/>
-                                  <text value="45"/>
+                                  <text value="50 100"/>
                                 </properties>
                               </component>
                               <component id="72db4" class="javax.swing.JLabel">
@@ -732,7 +732,7 @@
                                 <constraints/>
                                 <properties>
                                   <preferredSize width="100" height="20"/>
-                                  <text value="70 100"/>
+                                  <text value="50 100"/>
                                 </properties>
                               </component>
                               <component id="30f81" class="javax.swing.JLabel">
@@ -762,7 +762,7 @@
                                 <constraints/>
                                 <properties>
                                   <preferredSize width="100" height="20"/>
-                                  <text value="45"/>
+                                  <text value="50 100"/>
                                 </properties>
                               </component>
                               <component id="352dd" class="javax.swing.JLabel">
@@ -826,7 +826,7 @@
                                 <constraints/>
                                 <properties>
                                   <preferredSize width="100" height="20"/>
-                                  <text value="55"/>
+                                  <text value="33 67 100"/>
                                 </properties>
                               </component>
                               <component id="a49e2" class="javax.swing.JLabel">
@@ -856,7 +856,7 @@
                                 <constraints/>
                                 <properties>
                                   <preferredSize width="100" height="20"/>
-                                  <text value="45"/>
+                                  <text value="50 100"/>
                                 </properties>
                               </component>
                               <component id="ef7cc" class="javax.swing.JLabel">
@@ -907,7 +907,7 @@
                   <gridbag weightx="1.0" weighty="1.0"/>
                 </constraints>
                 <properties>
-                  <text value="Kd,Jd,Td,7s,8s"/>
+                  <text value="As,Qh,7d,Kc,Ah"/>
                 </properties>
               </component>
               <component id="ab7e1" class="javax.swing.JButton" binding="selectBoardCardButton" default-binding="true">
@@ -1024,7 +1024,7 @@
                     <constraints/>
                     <properties>
                       <preferredSize width="50" height="20"/>
-                      <text value="1"/>
+                      <text value="0.5"/>
                     </properties>
                   </component>
                   <component id="d60ad" class="javax.swing.JLabel">

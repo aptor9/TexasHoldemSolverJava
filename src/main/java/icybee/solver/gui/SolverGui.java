@@ -85,6 +85,224 @@ public class SolverGui {
         new SolverGui();
     }
 
+    public SolverGui() {
+        JFrame frame = new JFrame("SolverGui");
+
+        menuBar = new JMenuBar();
+        fileMenu = new JMenu("File");
+        menuBar.add(fileMenu);
+        loadMenuItem = new JMenuItem("Load");
+        saveMenuItem = new JMenuItem("Save");
+        fileMenu.add(loadMenuItem);
+        fileMenu.add(saveMenuItem);
+
+        frame.setJMenuBar(menuBar);
+        frame.setContentPane(mainPanel);
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.pack();
+        frame.setVisible(true);
+
+        PrintStream printStream = new PrintStream(new CustomOutputStream(this.log));
+        System.setOut(printStream);
+        System.setErr(printStream);
+
+        loadMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser fileChooser = new JFileChooser();
+                File workingDirectory = new File(System.getProperty("user.dir"));
+                fileChooser.setCurrentDirectory(workingDirectory);
+                int result = fileChooser.showOpenDialog(frame);
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    JOptionPane.showMessageDialog(frame, "Load from: " + fileChooser.getSelectedFile().getAbsolutePath());
+                }
+            }
+        });
+
+        saveMenuItem.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Preferences prefs = Preferences.userRoot().node(getClass().getName());
+                String lastOpenDirectory = prefs.get(LAST_OPEN_FOLDER, new File(System.getProperty("user.dir")).getAbsolutePath());
+                JFileChooser fileChooser = new JFileChooser(lastOpenDirectory);
+                int result = fileChooser.showSaveDialog(frame);
+                if (result == JFileChooser.APPROVE_OPTION) {
+                    prefs.put(LAST_OPEN_FOLDER, fileChooser.getSelectedFile().getParent());
+
+                    if(game_tree == null) {
+                        JOptionPane.showMessageDialog(frame, "Please build tree first");
+                        return;
+                    }
+
+                    String outputFilename = fileChooser.getSelectedFile().getAbsolutePath();
+                    File outputFile = new File(outputFilename);
+                    if (outputFile.exists()) {
+                        int response = JOptionPane.showConfirmDialog(null, //
+                                "Are you sure you want to overwrite this file?", //
+                                "Confirm", JOptionPane.YES_NO_OPTION, //
+                                JOptionPane.QUESTION_MESSAGE);
+                        if (response != JOptionPane.YES_OPTION) {
+                            return;
+                        }
+                    }
+
+                    new Thread() {
+                        public void run() {
+                            try {
+                                saveStrategy(outputFilename);
+                            } catch (IOException ex) {
+                                ex.printStackTrace();
+                            }
+                        }
+                    }.start();
+                }
+            }
+        });
+
+        // run initize
+        new Thread(){
+            public void run(){
+                initialize();
+            }
+        }.start();
+
+        // build trree
+        buildTreeButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                new Thread() {
+                    public void run(){
+                        onBuildTree();
+                    }
+                }.start();
+            }
+        });
+
+        startSolvingButton.setEnabled(false);
+        startSolvingButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(game_tree == null) {
+                    JOptionPane.showMessageDialog(frame, "Please build tree first");
+                    return;
+                }
+                new Thread(){
+                    public void run(){
+                        try {
+                            solve();
+                        }catch (Exception err){
+                            err.printStackTrace();
+                        }
+                    }
+                }.start();
+            }
+        });
+        showTreeButton.setEnabled(false);
+        showTreeButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(game_tree == null){
+                    JOptionPane.showMessageDialog(frame, "Please build tree first");
+                }else {
+                    game_tree.printTree(100);
+                }
+            }
+        });
+        clearLogButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                log.setText("");
+            }
+        });
+        showResultButton.setEnabled(false);
+        showResultButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if(game_tree == null) {
+                    JOptionPane.showMessageDialog(frame, "Please build tree first");
+                    return;
+                }
+                SolverResult sr = new SolverResult(game_tree,game_tree.getRoot(),boardstr.getText());
+                JFrame frame = new JFrame("SolverResult");
+                frame.setContentPane(sr.resultPanel);
+                frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                frame.pack();
+                frame.setVisible(true);
+            }
+        });
+        ooprange.setLineWrap(true);
+        iprange.setLineWrap(true);
+        selectOOPRangeButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                RangeSelectorCallback rsc = new RangeSelectorCallback() {
+                    @Override
+                    void onFinish(String content) {
+                        ooprange.setText(content);
+                    }
+                };
+                JFrame frame = new JFrame("RangeSelector");
+                RangeSelector rr = new RangeSelector(rsc,ooprange.getText(),mode.getSelectedIndex() == 0? RangeSelector.RangeType.HOLDEM: RangeSelector.RangeType.SHORTDECK,frame);
+                frame.setContentPane(rr.range_selector_main_panel);
+                frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                frame.pack();
+                frame.setVisible(true);
+
+            }
+        });
+
+        selectIPRangeButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                RangeSelectorCallback rsc = new RangeSelectorCallback() {
+                    @Override
+                    void onFinish(String content) {
+                        iprange.setText(content);
+                    }
+                };
+                JFrame frame = new JFrame("RangeSelector");
+                RangeSelector rr = new RangeSelector(rsc,iprange.getText(),mode.getSelectedIndex() == 0? RangeSelector.RangeType.HOLDEM: RangeSelector.RangeType.SHORTDECK,frame);
+                frame.setContentPane(rr.range_selector_main_panel);
+                frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                frame.pack();
+                frame.setVisible(true);
+            }
+        });
+        selectBoardCardButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                BoardSelectorCallback bsc = new BoardSelectorCallback() {
+                    @Override
+                    void onFinish(String content) {
+                        boardstr.setText(content);
+                    }
+                };
+                JFrame frame = new JFrame("BoardSelector");
+                BoardSelector br = new BoardSelector(bsc,boardstr.getText(),mode.getSelectedIndex() == 0? RangeSelector.RangeType.HOLDEM: RangeSelector.RangeType.SHORTDECK,frame);
+                frame.setContentPane(br.main_panel);
+                frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+                frame.pack();
+                frame.setVisible(true);
+            }
+        });
+        copy.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent actionEvent) {
+                flop_oop_allin.setSelected(flop_ip_allin.isSelected());
+                flop_oop_raise.setText(flop_ip_raise.getText());
+                flop_oop_bet.setText(flop_ip_bet.getText());
+
+                turn_oop_allin.setSelected(turn_ip_allin.isSelected());
+                turn_oop_raise.setText(turn_ip_raise.getText());
+                turn_oop_bet.setText(turn_ip_bet.getText());
+
+                river_oop_allin.setSelected(river_ip_allin.isSelected());
+                river_oop_raise.setText(river_ip_raise.getText());
+                river_oop_bet.setText(river_ip_bet.getText());
+            }
+        });
+    }
+
     Config loadConfig(String conf_name){
         File file;
         for(String one_url: new String[]{conf_name,"src/test/" + conf_name}) {
@@ -307,223 +525,5 @@ public class SolverGui {
         writer.close();
          */
         System.out.println("solve complete");
-    }
-
-    public SolverGui() {
-        JFrame frame = new JFrame("SolverGui");
-
-        menuBar = new JMenuBar();
-        fileMenu = new JMenu("File");
-        menuBar.add(fileMenu);
-        loadMenuItem = new JMenuItem("Load");
-        saveMenuItem = new JMenuItem("Save");
-        fileMenu.add(loadMenuItem);
-        fileMenu.add(saveMenuItem);
-
-        frame.setJMenuBar(menuBar);
-        frame.setContentPane(mainPanel);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.pack();
-        frame.setVisible(true);
-
-        PrintStream printStream = new PrintStream(new CustomOutputStream(this.log));
-        System.setOut(printStream);
-        System.setErr(printStream);
-
-        loadMenuItem.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                JFileChooser fileChooser = new JFileChooser();
-                File workingDirectory = new File(System.getProperty("user.dir"));
-                fileChooser.setCurrentDirectory(workingDirectory);
-                int result = fileChooser.showOpenDialog(frame);
-                if (result == JFileChooser.APPROVE_OPTION) {
-                    JOptionPane.showMessageDialog(frame, "Load from: " + fileChooser.getSelectedFile().getAbsolutePath());
-                }
-            }
-        });
-
-        saveMenuItem.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                Preferences prefs = Preferences.userRoot().node(getClass().getName());
-                String lastOpenDirectory = prefs.get(LAST_OPEN_FOLDER, new File(System.getProperty("user.dir")).getAbsolutePath());
-                JFileChooser fileChooser = new JFileChooser(lastOpenDirectory);
-                int result = fileChooser.showSaveDialog(frame);
-                if (result == JFileChooser.APPROVE_OPTION) {
-                    prefs.put(LAST_OPEN_FOLDER, fileChooser.getSelectedFile().getParent());
-
-                    if(game_tree == null) {
-                        JOptionPane.showMessageDialog(frame, "Please build tree first");
-                        return;
-                    }
-
-                    String outputFilename = fileChooser.getSelectedFile().getAbsolutePath();
-                    File outputFile = new File(outputFilename);
-                    if (outputFile.exists()) {
-                        int response = JOptionPane.showConfirmDialog(null, //
-                                "Are you sure you want to overwrite this file?", //
-                                "Confirm", JOptionPane.YES_NO_OPTION, //
-                                JOptionPane.QUESTION_MESSAGE);
-                        if (response != JOptionPane.YES_OPTION) {
-                            return;
-                        }
-                    }
-
-                    new Thread() {
-                        public void run() {
-                            try {
-                                saveStrategy(outputFilename);
-                            } catch (IOException ex) {
-                                ex.printStackTrace();
-                            }
-                        }
-                    }.start();
-                }
-            }
-        });
-
-        // run initize
-        new Thread(){
-            public void run(){
-                initialize();
-            }
-        }.start();
-
-        // build trree
-        buildTreeButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                new Thread() {
-                    public void run(){
-                        onBuildTree();
-                    }
-                }.start();
-            }
-        });
-
-        startSolvingButton.setEnabled(false);
-        startSolvingButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if(game_tree == null) {
-                    JOptionPane.showMessageDialog(frame, "Please build tree first");
-                    return;
-                }
-                new Thread(){
-                    public void run(){
-                        try {
-                            solve();
-                        }catch (Exception err){
-                            err.printStackTrace();
-                        }
-                    }
-                }.start();
-            }
-        });
-        showTreeButton.setEnabled(false);
-        showTreeButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if(game_tree == null){
-                    JOptionPane.showMessageDialog(frame, "Please build tree first");
-                }else {
-                    game_tree.printTree(100);
-                }
-            }
-        });
-        clearLogButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                log.setText("");
-            }
-        });
-        showResultButton.setEnabled(false);
-        showResultButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                if(game_tree == null) {
-                    JOptionPane.showMessageDialog(frame, "Please build tree first");
-                    return;
-                }
-                SolverResult sr = new SolverResult(game_tree,game_tree.getRoot(),boardstr.getText());
-                JFrame frame = new JFrame("SolverResult");
-                frame.setContentPane(sr.resultPanel);
-                frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                frame.pack();
-                frame.setVisible(true);
-            }
-        });
-        ooprange.setLineWrap(true);
-        iprange.setLineWrap(true);
-        selectOOPRangeButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent) {
-                RangeSelectorCallback rsc = new RangeSelectorCallback() {
-                    @Override
-                    void onFinish(String content) {
-                        ooprange.setText(content);
-                    }
-                };
-                JFrame frame = new JFrame("RangeSelector");
-                RangeSelector rr = new RangeSelector(rsc,ooprange.getText(),mode.getSelectedIndex() == 0? RangeSelector.RangeType.HOLDEM: RangeSelector.RangeType.SHORTDECK,frame);
-                frame.setContentPane(rr.range_selector_main_panel);
-                frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                frame.pack();
-                frame.setVisible(true);
-
-            }
-        });
-
-        selectIPRangeButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent) {
-                RangeSelectorCallback rsc = new RangeSelectorCallback() {
-                    @Override
-                    void onFinish(String content) {
-                        iprange.setText(content);
-                    }
-                };
-                JFrame frame = new JFrame("RangeSelector");
-                RangeSelector rr = new RangeSelector(rsc,iprange.getText(),mode.getSelectedIndex() == 0? RangeSelector.RangeType.HOLDEM: RangeSelector.RangeType.SHORTDECK,frame);
-                frame.setContentPane(rr.range_selector_main_panel);
-                frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                frame.pack();
-                frame.setVisible(true);
-            }
-        });
-        selectBoardCardButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                BoardSelectorCallback bsc = new BoardSelectorCallback() {
-                    @Override
-                    void onFinish(String content) {
-                        boardstr.setText(content);
-                    }
-                };
-                JFrame frame = new JFrame("BoardSelector");
-                BoardSelector br = new BoardSelector(bsc,boardstr.getText(),mode.getSelectedIndex() == 0? RangeSelector.RangeType.HOLDEM: RangeSelector.RangeType.SHORTDECK,frame);
-                frame.setContentPane(br.main_panel);
-                frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-                frame.pack();
-                frame.setVisible(true);
-            }
-        });
-        copy.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent actionEvent) {
-                flop_oop_allin.setSelected(flop_ip_allin.isSelected());
-                flop_oop_raise.setText(flop_ip_raise.getText());
-                flop_oop_bet.setText(flop_ip_bet.getText());
-
-                turn_oop_allin.setSelected(turn_ip_allin.isSelected());
-                turn_oop_raise.setText(turn_ip_raise.getText());
-                turn_oop_bet.setText(turn_ip_bet.getText());
-
-                river_oop_allin.setSelected(river_ip_allin.isSelected());
-                river_oop_raise.setText(river_ip_raise.getText());
-                river_oop_bet.setText(river_ip_bet.getText());
-            }
-        });
     }
 }
