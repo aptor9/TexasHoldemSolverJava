@@ -59,6 +59,17 @@ public class GameTreeBuildingSettings {
             json.put("allin", allin);
             return json;
         }
+
+        public static StreetSetting fromJson(JSONObject json) {
+            String betSizes = json.getString("bet_sizes");
+            String raiseSizes = json.getString("raise_sizes");
+            String donkSizes = null;
+            if (json.has("donk_sizes")) {
+                donkSizes = json.getString("donk_sizes");
+            }
+            boolean allin = json.getBoolean("allin");
+            return new StreetSetting(betSizes, raiseSizes, donkSizes, allin);
+        }
     }
     public StreetSetting flop_ip;
     public StreetSetting turn_ip;
@@ -103,5 +114,15 @@ public class GameTreeBuildingSettings {
         json.put("turn_oop_bet", turn_oop.toJson());
         json.put("river_oop_bet", river_oop.toJson());
         return json;
+    }
+
+    public static GameTreeBuildingSettings fromJson(JSONObject json) {
+        return new GameTreeBuildingSettings(
+                StreetSetting.fromJson(json.getJSONObject("flop_ip_bet")),
+                StreetSetting.fromJson(json.getJSONObject("turn_ip_bet")),
+                StreetSetting.fromJson(json.getJSONObject("river_ip_bet")),
+                StreetSetting.fromJson(json.getJSONObject("flop_oop_bet")),
+                StreetSetting.fromJson(json.getJSONObject("turn_oop_bet")),
+                StreetSetting.fromJson(json.getJSONObject("river_oop_bet")));
     }
 }

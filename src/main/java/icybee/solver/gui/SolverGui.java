@@ -3,10 +3,10 @@ package icybee.solver.gui;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintStream;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.prefs.Preferences;
@@ -113,12 +113,38 @@ public class SolverGui {
         loadMenuItem.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                JFileChooser fileChooser = new JFileChooser();
-                File workingDirectory = new File(System.getProperty("user.dir"));
-                fileChooser.setCurrentDirectory(workingDirectory);
+                Preferences prefs = Preferences.userRoot().node(getClass().getName());
+                String lastOpenDirectory = prefs.get(LAST_OPEN_FOLDER, new File(System.getProperty("user.dir")).getAbsolutePath());
+                JFileChooser fileChooser = new JFileChooser(lastOpenDirectory);
                 int result = fileChooser.showOpenDialog(frame);
                 if (result == JFileChooser.APPROVE_OPTION) {
-                    JOptionPane.showMessageDialog(frame, "Load from: " + fileChooser.getSelectedFile().getAbsolutePath());
+                    prefs.put(LAST_OPEN_FOLDER, fileChooser.getSelectedFile().getParent());
+
+                    String loadFilename = fileChooser.getSelectedFile().getAbsolutePath();
+                    File loadFile = new File(loadFilename);
+                    if (!loadFile.exists()) {
+                        JOptionPane.showMessageDialog(frame, "The selected file doesn't exist!");
+                        return;
+                    }
+
+                    if(game_tree != null) {
+                        int response = JOptionPane.showConfirmDialog(null, //
+                                "After loading this train result file, your current game tree will be lost. Are you sure?", //
+                                "Confirm", JOptionPane.YES_NO_OPTION, //
+                                JOptionPane.QUESTION_MESSAGE);
+                        if (response != JOptionPane.YES_OPTION) {
+                            return;
+                        }
+                    }
+                    new Thread() {
+                        public void run() {
+                            try {
+                                loadTrainResult(loadFilename);
+                            } catch (IOException ex) {
+                                ex.printStackTrace();
+                            }
+                        }
+                    }.start();
                 }
             }
         });
@@ -377,6 +403,19 @@ public class SolverGui {
                 river_oop_allin.isSelected()
         );
         return new GameTreeBuildingSettings(flop_ip,turn_ip,river_ip,flop_oop,turn_oop,river_oop);
+    }
+
+    private void loadTrainResult(String filename) throws IOException {
+        System.out.println("loading train result from " + filename);
+
+        String content = Files.readString(Paths.get(filename));
+
+        JSONObject trainResult = new JSONObject(content);
+//        trainResult.put("game_tree", strategy);
+        solveConfig = SolveConfig.fromJson(trainResult.getJSONObject("solve_config"));
+        treeSettings = GameTreeBuildingSettings.fromJson(trainResult.getJSONObject("tree_settings"));
+
+        System.out.println("load finished!");
     }
 
     private void saveTrainResult(String filename) throws IOException {

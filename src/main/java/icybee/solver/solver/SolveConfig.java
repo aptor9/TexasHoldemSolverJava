@@ -195,15 +195,7 @@ public class SolveConfig {
 
     public JSONObject toJson() {
         JSONObject json = new JSONObject();
-            this.oopRangeStr = oopRangeStr;
-            this.ipRangeStr = ipRangeStr;
-            this.initialBoardStr = initialBoardStr;
-            this.deckMode = deckMode;
-            this.iterationStr = iterationStr;
-            this.logIntervalStr = logIntervalStr;
-            this.algorithmMode = algorithmMode;
-            this.monteCarloAlg = monteCarloAlg;
-            this.stopExploitabilityStr = stopExploitabilityStr;
+
         json.put("oop_range", oopRangeStr);
         json.put("ip_range", ipRangeStr);
         json.put("board", initialBoardStr);
@@ -214,5 +206,29 @@ public class SolveConfig {
         json.put("monte_carlo_alg", monteCarloAlg);
         json.put("stop_exploitability", stopExploitabilityStr);
         return json;
+    }
+
+    public static SolveConfig fromJson(JSONObject json) {
+        String oopRangeStr = json.getString("oop_range");
+        String ipRangeStr = json.getString("ip_range");
+        String initialBoardStr = json.getString("board");
+        int deckMode = json.getInt("deck_mode");
+        String iterationStr = json.getString("iteration");
+        String logIntervalStr = json.getString("log_interval");
+        int algorithmMode = json.getInt("algorithm_mode");
+        boolean monteCarloAlg = json.getBoolean("monte_carlo_alg");
+        String stopExploitabilityStr = json.getString("stop_exploitability");
+
+        return new SolveConfig(
+                oopRangeStr,
+                ipRangeStr,
+                initialBoardStr,
+                deckMode,
+                iterationStr,
+                logIntervalStr,
+                algorithmMode,
+                monteCarloAlg,
+                stopExploitabilityStr
+        );
     }
 }
