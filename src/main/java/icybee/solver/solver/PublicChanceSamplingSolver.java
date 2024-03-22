@@ -13,7 +13,7 @@ public class PublicChanceSamplingSolver extends Solver{
         super(tree);
     }
     @Override
-    public void train(Map training_config) {
+    public void train(SolveConfig solveConfig) {
 
     }
 }

@@ -405,7 +405,7 @@
                               <component id="4db7d" class="javax.swing.JCheckBox" binding="river_oop_allin">
                                 <constraints/>
                                 <properties>
-                                  <selected value="false"/>
+                                  <selected value="true"/>
                                   <text value="add allin"/>
                                 </properties>
                               </component>
@@ -783,7 +783,7 @@
                               <component id="8175" class="javax.swing.JCheckBox" binding="river_ip_allin">
                                 <constraints/>
                                 <properties>
-                                  <selected value="false"/>
+                                  <selected value="true"/>
                                   <text value="add allin"/>
                                 </properties>
                               </component>

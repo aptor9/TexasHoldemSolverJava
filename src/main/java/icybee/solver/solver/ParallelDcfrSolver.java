@@ -13,11 +13,7 @@ public class ParallelDcfrSolver extends Solver{
         super(tree);
     }
     @Override
-    public void train(Map training_config) {
-        Map<String,Object> config_map = training_config;
-        Integer iterations = (Integer)config_map.get("iterations");
-        if(iterations == null){
-            throw new RuntimeException("iteration is null");
-        }
+    public void train(SolveConfig solveConfig) {
+
     }
 }

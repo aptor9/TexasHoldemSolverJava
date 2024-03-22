@@ -11,10 +11,7 @@ import java.util.Map;
 import icybee.solver.compairer.Compairer;
 import icybee.solver.gui.SolverGui;
 import icybee.solver.ranges.PrivateCards;
-import icybee.solver.solver.CfrPlusRiverSolver;
-import icybee.solver.solver.MonteCarolAlg;
-import icybee.solver.solver.ParallelCfrPlusSolver;
-import icybee.solver.solver.Solver;
+import icybee.solver.solver.*;
 import icybee.solver.trainable.CfrPlusTrainable;
 import icybee.solver.trainable.CfrTrainable;
 import icybee.solver.trainable.DiscountedCfrTrainable;
@@ -160,17 +157,6 @@ public class CommandlineSolver {
         Solver solver;
         if(parallel) {
             solver = new ParallelCfrPlusSolver(game_tree
-                    , player1Range
-                    , player2Range
-                    , initial_board
-                    , compairer
-                    , deck
-                    , iteration_number
-                    , debug
-                    , print_interval
-                    , logfile
-                    , algorithm
-                    , monte_coral
                     , threads
                     , fork_at_action
                     , fork_at_chance
@@ -178,22 +164,23 @@ public class CommandlineSolver {
                     , no_fork_subtree_size
             );
         }else{
-            solver = new CfrPlusRiverSolver(game_tree
-                    , player1Range
-                    , player2Range
-                    , initial_board
-                    , compairer
-                    , deck
-                    , iteration_number
-                    , debug
-                    , print_interval
-                    , logfile
-                    , algorithm
-                    , monte_coral
-            );
+            solver = new CfrPlusRiverSolver(game_tree);
         }
-        Map train_config = new HashMap();
-        solver.train(train_config);
+        SolveConfig solveConfig = new SolveConfig(
+                player1Range
+                , player2Range
+                , initial_board
+                , compairer
+                , deck
+                , iteration_number
+                , debug
+                , print_interval
+                , logfile
+                , algorithm
+                , monte_coral
+                , 0.0
+        );
+        solver.train(solveConfig);
 
         String strategy_json = solver.getTree().dumps(false).toString();
         File output_file = new File(output_strategy_file);

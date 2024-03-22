@@ -18,6 +18,7 @@ import icybee.solver.solver.*;
 import icybee.solver.trainable.CfrPlusTrainable;
 import icybee.solver.trainable.DiscountedCfrTrainable;
 import icybee.solver.utils.PrivateRangeConverter;
+import org.json.JSONObject;
 
 public class SolverGui {
     private static final String LAST_OPEN_FOLDER = "last_open_folder";
@@ -80,6 +81,9 @@ public class SolverGui {
     private Deck holdem_deck = null;
     private Deck shortdeck_deck = null;
     GameTree game_tree;
+    SolveConfig solveConfig;
+
+    GameTreeBuildingSettings treeSettings;
 
     public static void main(String[] args) {
         new SolverGui();
@@ -149,7 +153,7 @@ public class SolverGui {
                     new Thread() {
                         public void run() {
                             try {
-                                saveStrategy(outputFilename);
+                                saveTrainResult(outputFilename);
                             } catch (IOException ex) {
                                 ex.printStackTrace();
                             }
@@ -334,72 +338,58 @@ public class SolverGui {
         System.out.println("loading shortdeck compairer dictionary complete");
     }
 
-    float[] parseBetSizes(String betstr){
-        String[] bets_str = betstr.split(" ");
-        float[] bet_sizes = new float[bets_str.length];
-        for(int i = 0;i < bets_str.length;i ++){
-            String one_bet_str = bets_str[i];
-            if(one_bet_str.length() == 0)continue;
-            boolean multiplier = false;
-            if(one_bet_str.charAt(one_bet_str.length() - 1) == 'x'){
-                one_bet_str = one_bet_str.substring(0,one_bet_str.length() - 1);
-                multiplier = true;
-            }
-            if(multiplier) bet_sizes[i] = Float.parseFloat(one_bet_str) * 100;
-            else bet_sizes[i] = Float.parseFloat(one_bet_str);
-        }
-        return bet_sizes;
-    }
-
     GameTreeBuildingSettings parseSettings(){
         GameTreeBuildingSettings.StreetSetting flop_ip = new GameTreeBuildingSettings.StreetSetting(
-                parseBetSizes(flop_ip_bet.getText()),
-                parseBetSizes(flop_ip_raise.getText()),
+                flop_ip_bet.getText(),
+                flop_ip_raise.getText(),
                 null,
                 flop_ip_allin.isSelected()
         );
         GameTreeBuildingSettings.StreetSetting turn_ip = new GameTreeBuildingSettings.StreetSetting(
-                parseBetSizes(turn_ip_bet.getText()),
-                parseBetSizes(turn_ip_raise.getText()),
+                turn_ip_bet.getText(),
+                turn_ip_raise.getText(),
                 null,
                 turn_ip_allin.isSelected()
         );
         GameTreeBuildingSettings.StreetSetting river_ip = new GameTreeBuildingSettings.StreetSetting(
-                parseBetSizes(river_ip_bet.getText()),
-                parseBetSizes(river_ip_raise.getText()),
+                river_ip_bet.getText(),
+                river_ip_raise.getText(),
                 null,
                 river_ip_allin.isSelected()
         );
 
         GameTreeBuildingSettings.StreetSetting flop_oop = new GameTreeBuildingSettings.StreetSetting(
-                parseBetSizes(flop_oop_bet.getText()),
-                parseBetSizes(flop_oop_raise.getText()),
+                flop_oop_bet.getText(),
+                flop_oop_raise.getText(),
                 null,
                 flop_oop_allin.isSelected()
         );
         GameTreeBuildingSettings.StreetSetting turn_oop = new GameTreeBuildingSettings.StreetSetting(
-                parseBetSizes(turn_oop_bet.getText()),
-                parseBetSizes(turn_oop_raise.getText()),
-                parseBetSizes(turn_oop_donk.getText()),
+                turn_oop_bet.getText(),
+                turn_oop_raise.getText(),
+                turn_oop_donk.getText(),
                 turn_oop_allin.isSelected()
         );
         GameTreeBuildingSettings.StreetSetting river_oop = new GameTreeBuildingSettings.StreetSetting(
-                parseBetSizes(river_oop_bet.getText()),
-                parseBetSizes(river_oop_raise.getText()),
-                parseBetSizes(river_oop_donk.getText()),
+                river_oop_bet.getText(),
+                river_oop_raise.getText(),
+                river_oop_donk.getText(),
                 river_oop_allin.isSelected()
         );
-        GameTreeBuildingSettings gameTreeBuildingSettings = new GameTreeBuildingSettings(flop_ip,turn_ip,river_ip,flop_oop,turn_oop,river_oop);
-        return gameTreeBuildingSettings;
+        return new GameTreeBuildingSettings(flop_ip,turn_ip,river_ip,flop_oop,turn_oop,river_oop);
     }
 
-    private void saveStrategy(String filename) throws IOException {
-        System.out.println("saving strategy to " + filename);
+    private void saveTrainResult(String filename) throws IOException {
+        System.out.println("saving train result to " + filename);
 
-        String strategy_json = game_tree.dumps(false).toString();
+        JSONObject trainResult = new JSONObject();
+        JSONObject strategy = game_tree.dumps(false);
+        trainResult.put("game_tree", strategy);
+        trainResult.put("solve_config", solveConfig.toJson());
+        trainResult.put("tree_settings", treeSettings.toJson());
         File output_file = new File(filename);
         FileWriter writer = new FileWriter(output_file);
-        writer.write(strategy_json);
+        writer.write(trainResult.toString());
         writer.flush();
         writer.close();
 
@@ -423,7 +413,7 @@ public class SolverGui {
             round = 4;
         }else throw new RuntimeException("board number not valid");
 
-
+        treeSettings = parseSettings();
         if(mode == 0) {
             this.game_tree = SolverEnvironment.gameTreeFromParams(
                     this.holdem_deck,
@@ -434,7 +424,7 @@ public class SolverGui {
                     (float) 0.5,
                     (float) 1.0,
                     Float.valueOf(this.stacks.getText()) + Float.valueOf(this.pot.getText()) / 2,
-                    parseSettings()
+                    treeSettings
             );
         }else if(mode == 1){
             this.game_tree = SolverEnvironment.gameTreeFromParams(
@@ -446,7 +436,7 @@ public class SolverGui {
                     (float) 0.5,
                     (float) 1.0,
                     Float.valueOf(this.stacks.getText()) + Float.valueOf(this.pot.getText()) / 2,
-                    parseSettings()
+                    treeSettings
             );
         }else{
             throw new RuntimeException("game mode unknown");
@@ -474,46 +464,26 @@ public class SolverGui {
             return;
         }
         System.out.println("solving...");
-        String player1RangeStr = iprange.getText();
-        String player2RangeStr = ooprange.getText();
-        // TODO check these ranges
-
-        String board = boardstr.getText();
-        String[] board_cards = board.split(",");
-
-        int[] initialBoard = new int[board_cards.length];
-        for(int i = 0;i < board_cards.length;i ++){
-            initialBoard[i] = Card.strCard2int(board_cards[i]);
-        }
-
-        PrivateCards[] player1Range = PrivateRangeConverter.rangeStr2Cards(player1RangeStr,initialBoard);
-        PrivateCards[] player2Range = PrivateRangeConverter.rangeStr2Cards(player2RangeStr,initialBoard);
-        String logfile_name = null;
-
-        Compairer compairer =  mode.getSelectedIndex() == 0 ? this.compairer_holdem:this.compairer_shortdeck;
-        Deck deck = mode.getSelectedIndex() == 0 ? this.holdem_deck:this.shortdeck_deck;
+        this.solveConfig = new SolveConfig(
+                iprange.getText()
+                , ooprange.getText()
+                , boardstr.getText()
+                , mode.getSelectedIndex()
+                , iteration.getText()
+                , log_interval.getText()
+                , algorithm.getSelectedIndex()
+                , mc.isSelected()
+                , exploitability.getText()
+        );
 
         Solver solver = new ParallelCfrPlusSolver(game_tree
-                , player1Range
-                , player2Range
-                , initialBoard
-                , compairer
-                , deck
-                , Integer.valueOf(iteration.getText())
-                , false
-                , Integer.valueOf(log_interval.getText())
-                , logfile_name
-                , algorithm.getSelectedIndex() == 0? DiscountedCfrTrainable.class : CfrPlusTrainable.class
-                , mc.isSelected()? MonteCarolAlg.PUBLIC:MonteCarolAlg.NONE
-                , Integer.valueOf(threads.getText())
+                , Integer.parseInt(threads.getText())
                 ,1
                 ,1
                 , 1
                 , 16
         );
-        Map train_config = new HashMap();
-        train_config.put("stop_exploitibility",Double.valueOf(exploitability.getText()));
-        solver.train(train_config);
+        solver.train(solveConfig);
 
         /*
         String output_strategy_file = "out/demo.json";

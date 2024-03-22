@@ -3,10 +3,7 @@ package icybee.solver;
 import icybee.solver.compairer.Compairer;
 import icybee.solver.exceptions.BoardNotFoundException;
 import icybee.solver.ranges.PrivateCards;
-import icybee.solver.solver.CfrPlusRiverSolver;
-import icybee.solver.solver.MonteCarolAlg;
-import icybee.solver.solver.ParallelCfrPlusSolver;
-import icybee.solver.solver.Solver;
+import icybee.solver.solver.*;
 import icybee.solver.trainable.DiscountedCfrTrainable;
 import icybee.solver.utils.PrivateRangeConverter;
 import org.junit.Before;
@@ -380,8 +377,9 @@ public class TexasHoldemSolverTest
          */
 
         String logfile_name = "src/test/resources/outputs/outputs_log.txt";
-        Solver solver = new CfrPlusRiverSolver(game_tree
-                , player1Range
+        Solver solver = new CfrPlusRiverSolver(game_tree);
+        SolveConfig solveConfig = new SolveConfig(
+                player1Range
                 , player2Range
                 , initialBoard
                 , TexasHoldemSolverTest.compairer
@@ -391,10 +389,9 @@ public class TexasHoldemSolverTest
                 , 10
                 ,logfile_name
                 , DiscountedCfrTrainable.class
-                ,MonteCarolAlg.NONE
-        );
-        Map train_config = new HashMap();
-        solver.train(train_config);
+                ,MonteCarolAlg.NONE,
+                0.0);
+        solver.train(solveConfig);
 
         String strategy_json = solver.getTree().dumps(false).toString(4);
 
@@ -460,7 +457,9 @@ public class TexasHoldemSolverTest
 
         String logfile_name = "src/test/resources/outputs/outputs_log.txt";
         Solver solver = new CfrPlusRiverSolver(game_tree
-                , player1Range
+        );
+        SolveConfig solveConfig = new SolveConfig(
+                player1Range
                 , player2Range
                 , initialBoard
                 , TexasHoldemSolverTest.compairer
@@ -471,9 +470,9 @@ public class TexasHoldemSolverTest
                 ,logfile_name
                 , DiscountedCfrTrainable.class
                 ,MonteCarolAlg.NONE
+                , 0.0
         );
-        Map train_config = new HashMap();
-        solver.train(train_config);
+        solver.train(solveConfig);
 
         String strategy_json = solver.getTree().dumps(false).toString();
 
@@ -523,8 +522,9 @@ public class TexasHoldemSolverTest
         PrivateCards[] player2Range = PrivateRangeConverter.rangeStr2Cards(player2RangeStr,initialBoard);
 
         String logfile_name = "src/test/resources/outputs/outputs_log.txt";
-        Solver solver = new CfrPlusRiverSolver(game_tree
-                , player1Range
+        Solver solver = new CfrPlusRiverSolver(game_tree);
+        SolveConfig solveConfig = new SolveConfig(
+                player1Range
                 , player2Range
                 , initialBoard
                 , TexasHoldemSolverTest.compairer
@@ -535,9 +535,9 @@ public class TexasHoldemSolverTest
                 ,logfile_name
                 , DiscountedCfrTrainable.class
                 ,MonteCarolAlg.NONE
+                , 0.0
         );
-        Map train_config = new HashMap();
-        solver.train(train_config);
+        solver.train(solveConfig);
 
         String strategy_json = solver.getTree().dumps(false).toString(4);
 
@@ -587,8 +587,9 @@ public class TexasHoldemSolverTest
         PrivateCards[] player2Range = PrivateRangeConverter.rangeStr2Cards(player2RangeStr,initialBoard);
 
         String logfile_name = "src/test/resources/outputs/outputs_log.txt";
-        Solver solver = new CfrPlusRiverSolver(game_tree
-                , player1Range
+        Solver solver = new CfrPlusRiverSolver(game_tree);
+        SolveConfig solveConfig = new SolveConfig(
+                player1Range
                 , player2Range
                 , initialBoard
                 , TexasHoldemSolverTest.compairer
@@ -599,9 +600,9 @@ public class TexasHoldemSolverTest
                 ,logfile_name
                 , DiscountedCfrTrainable.class
                 ,MonteCarolAlg.PUBLIC
+                , 0.0
         );
-        Map train_config = new HashMap();
-        solver.train(train_config);
+        solver.train(solveConfig);
 
         String strategy_json = solver.getTree().dumps(false).toString(4);
 
@@ -651,8 +652,9 @@ public class TexasHoldemSolverTest
         PrivateCards[] player2Range = PrivateRangeConverter.rangeStr2Cards(player2RangeStr,initialBoard);
 
         String logfile_name = "src/test/resources/outputs/outputs_log.txt";
-        Solver solver = new CfrPlusRiverSolver(game_tree
-                , player1Range
+        Solver solver = new CfrPlusRiverSolver(game_tree);
+        SolveConfig solveConfig = new SolveConfig(
+                player1Range
                 , player2Range
                 , initialBoard
                 , TexasHoldemSolverTest.compairer
@@ -663,9 +665,9 @@ public class TexasHoldemSolverTest
                 ,logfile_name
                 , DiscountedCfrTrainable.class
                 ,MonteCarolAlg.NONE
+                , 0.0
         );
-        Map train_config = new HashMap();
-        solver.train(train_config);
+        solver.train(solveConfig);
 
         String strategy_json = solver.getTree().dumps(false).toString(4);
 
@@ -715,8 +717,9 @@ public class TexasHoldemSolverTest
         PrivateCards[] player2Range = PrivateRangeConverter.rangeStr2Cards(player2RangeStr,initialBoard);
 
         String logfile_name = "src/test/resources/outputs/outputs_log.txt";
-        Solver solver = new CfrPlusRiverSolver(game_tree
-                , player1Range
+        Solver solver = new CfrPlusRiverSolver(game_tree);
+        SolveConfig solveConfig = new SolveConfig(
+                player1Range
                 , player2Range
                 , initialBoard
                 , TexasHoldemSolverTest.compairer
@@ -727,9 +730,9 @@ public class TexasHoldemSolverTest
                 ,logfile_name
                 , DiscountedCfrTrainable.class
                 ,MonteCarolAlg.PUBLIC
+                , 0.0
         );
-        Map train_config = new HashMap();
-        solver.train(train_config);
+        solver.train(solveConfig);
 
         String strategy_json = solver.getTree().dumps(false).toString(4);
 
@@ -780,7 +783,14 @@ public class TexasHoldemSolverTest
 
         String logfile_name = "src/test/resources/outputs/outputs_log.txt";
         Solver solver = new ParallelCfrPlusSolver(game_tree
-                , player1Range
+                ,2
+                ,1
+                ,0
+                , 1
+                , 0
+        );
+        SolveConfig solveConfig = new SolveConfig(
+                player1Range
                 , player2Range
                 , initialBoard
                 , TexasHoldemSolverTest.compairer
@@ -790,15 +800,10 @@ public class TexasHoldemSolverTest
                 , 10
                 ,logfile_name
                 , DiscountedCfrTrainable.class
-                , MonteCarolAlg.NONE
-                ,2
-                ,1
-                ,0
-                , 1
-                , 0
+                ,MonteCarolAlg.NONE
+                , 0.0
         );
-        Map train_config = new HashMap();
-        solver.train(train_config);
+        solver.train(solveConfig);
 
         String strategy_json = solver.getTree().dumps(false).toString(4);
 

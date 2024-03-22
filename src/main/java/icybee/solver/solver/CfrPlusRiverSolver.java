@@ -24,32 +24,13 @@ import java.util.concurrent.ThreadLocalRandom;
  * contains code for cfr solver
  */
 public class CfrPlusRiverSolver extends Solver{
-    PrivateCards[][] ranges;
-    PrivateCards[] range1;
-    PrivateCards[] range2;
-    int[] initial_board;
-    long initial_board_long;
-    Compairer compairer;
-
-    Deck deck;
-    ForkJoinPool forkJoinPool;
-    RiverRangeManager rrm;
-    int player_number;
-    int iteration_number;
-    PrivateCardsManager pcm;
-    boolean debug;
-    int print_interval;
-    String logfile;
-    Class<?> trainer;
     int[] round_deal;
-
-    MonteCarolAlg monteCarolAlg;
 
     PrivateCards[] playerHands(int player){
         if(player == 0){
-            return range1;
+            return solveConfig.range1;
         }else if (player == 1){
-            return range2;
+            return solveConfig.range2;
         }else{
             throw new RuntimeException("player not found");
         }
@@ -68,8 +49,8 @@ public class CfrPlusRiverSolver extends Solver{
      */
 
     float[][] getReachProbs(){
-        float[][] retval = new float[this.player_number][];
-        for(int player = 0;player < this.player_number;player ++){
+        float[][] retval = new float[this.solveConfig.player_number][];
+        for(int player = 0;player < this.solveConfig.player_number;player ++){
             PrivateCards[] player_cards = this.playerHands(player);
             float[] reach_prob = new float[player_cards.length];
             for(int i = 0;i < player_cards.length;i ++){
@@ -80,75 +61,8 @@ public class CfrPlusRiverSolver extends Solver{
         return retval;
     }
 
-    public PrivateCards[] noDuplicateRange(PrivateCards[] private_range,long board_long){
-        List<PrivateCards> range_array = new ArrayList<>();
-        Map<Integer,Boolean> rangekv = new HashMap<>();
-        for(PrivateCards one_range:private_range){
-            if(one_range == null) throw new RuntimeException();
-            if(rangekv.get(one_range.hashCode()) != null)
-                throw new RuntimeException(String.format("duplicated key %d",one_range.toString()));
-            rangekv.put(one_range.hashCode(),Boolean.TRUE);
-            long hand_long = Card.boardInts2long(new int[]{
-                    one_range.card1,
-                    one_range.card2
-            });
-            if(!Card.boardsHasIntercept(hand_long,board_long)){
-                range_array.add(one_range);
-            }
-        }
-        PrivateCards[] ret = new PrivateCards[range_array.size()];
-        range_array.toArray(ret);
-        return ret;
-    }
-
-    public CfrPlusRiverSolver(
-            GameTree tree,
-            PrivateCards[] range1 ,
-            PrivateCards[] range2,
-            int[] initial_board,
-            Compairer compairer,
-            Deck deck,
-            int iteration_number,
-            boolean debug,
-            int print_interval,
-            String logfile,
-            Class<?> trainer,
-            MonteCarolAlg monteCarolAlg
-    ){
+    public CfrPlusRiverSolver(GameTree tree) {
         super(tree);
-        //if(board.length != 5) throw new RuntimeException(String.format("board length %d",board.length));
-        this.initial_board = initial_board;
-        this.initial_board_long = Card.boardInts2long(initial_board);
-        this.logfile = logfile;
-        this.trainer = trainer;
-
-        range1 = this.noDuplicateRange(range1,initial_board_long);
-        range2 = this.noDuplicateRange(range2,initial_board_long);
-
-        this.range1 = range1;
-        this.range2 = range2;
-        this.player_number = 2;
-        this.ranges = new PrivateCards[this.player_number][];
-        this.ranges[0] = range1;
-        this.ranges[1] = range2;
-
-        this.compairer = compairer;
-
-        this.deck = deck;
-
-        int nThreads = Runtime.getRuntime().availableProcessors();
-        this.forkJoinPool = new ForkJoinPool(nThreads);
-
-        this.rrm = new RiverRangeManager(compairer);
-        this.iteration_number = iteration_number;
-
-        PrivateCards[][] private_cards = new PrivateCards[this.player_number][];
-        private_cards[0] = range1;
-        private_cards[1] = range2;
-        pcm = new PrivateCardsManager(private_cards,this.player_number,Card.boardInts2long(this.initial_board));
-        this.debug = debug;
-        this.print_interval = print_interval;
-        this.monteCarolAlg = monteCarolAlg;
     }
 
 
@@ -157,9 +71,9 @@ public class CfrPlusRiverSolver extends Solver{
             ActionNode action_node = (ActionNode)root;
 
             int player = action_node.getPlayer();
-            PrivateCards[] player_privates = this.ranges[player];
+            PrivateCards[] player_privates = this.solveConfig.ranges[player];
 
-            action_node.setTrainable((Trainable) this.trainer.getConstructor(ActionNode.class,PrivateCards[].class).newInstance(action_node,player_privates));
+            action_node.setTrainable((Trainable) this.solveConfig.trainer.getConstructor(ActionNode.class,PrivateCards[].class).newInstance(action_node,player_privates));
 
             List<GameTreeNode> childrens =  action_node.getChildrens();
             for(GameTreeNode one_child:childrens) setTrainable(one_child);
@@ -177,39 +91,43 @@ public class CfrPlusRiverSolver extends Solver{
     }
 
     @Override
-    public void train(Map training_config) throws Exception {
+    public void train(SolveConfig solveConfig) throws Exception {
+        this.solveConfig = solveConfig;
+        this.rrm = new RiverRangeManager(solveConfig.compairer);
+        this.pcm = new PrivateCardsManager(solveConfig.ranges, solveConfig.player_number, solveConfig.initial_board_long);
+
         setTrainable(tree.getRoot());
 
-        PrivateCards[][] player_privates = new PrivateCards[this.player_number][];
+        PrivateCards[][] player_privates = new PrivateCards[this.solveConfig.player_number][];
         player_privates[0] = pcm.getPreflopCards(0);
         player_privates[1] = pcm.getPreflopCards(1);
 
-        BestResponse br = new BestResponse(player_privates,this.player_number,this.compairer,this.pcm,this.rrm,this.deck,this.debug);
+        BestResponse br = new BestResponse(player_privates,this.solveConfig.player_number,this.solveConfig.compairer,this.pcm,this.rrm,this.solveConfig.deck,this.solveConfig.debug);
 
-        br.printExploitability(tree.getRoot(), 0, tree.getRoot().getPot().floatValue(), initial_board_long);
+        br.printExploitability(tree.getRoot(), 0, tree.getRoot().getPot().floatValue(), solveConfig.initial_board_long);
 
         float[][] reach_probs = this.getReachProbs();
-        FileWriter fileWriter = new FileWriter(this.logfile);
+        FileWriter fileWriter = new FileWriter(this.solveConfig.logfile);
 
         long begintime = System.currentTimeMillis();
         long endtime = System.currentTimeMillis();
-        for(int i = 0;i < this.iteration_number;i++){
-            for(int player_id = 0;player_id < this.player_number;player_id ++) {
-                if(this.debug){
+        for(int i = 0;i < this.solveConfig.iteration_number;i++){
+            for(int player_id = 0;player_id < this.solveConfig.player_number;player_id ++) {
+                if(this.solveConfig.debug){
                     System.out.println(String.format(
                             "---------------------------------     player %s --------------------------------",
                             player_id
                     ));
                 }
                 this.round_deal = new int[]{-1,-1,-1,-1};
-                cfr(player_id,this.tree.getRoot(),reach_probs,i,this.initial_board_long);
+                cfr(player_id,this.tree.getRoot(),reach_probs,i,this.solveConfig.initial_board_long);
 
             }
-            if(i % this.print_interval == 0) {
+            if(i % this.solveConfig.print_interval == 0) {
                 System.out.println("-------------------");
                 endtime = System.currentTimeMillis();
-                float expliotibility = br.printExploitability(tree.getRoot(), i + 1, tree.getRoot().getPot().floatValue(), initial_board_long);
-                if(this.logfile != null){
+                float expliotibility = br.printExploitability(tree.getRoot(), i + 1, tree.getRoot().getPot().floatValue(), solveConfig.initial_board_long);
+                if(this.solveConfig.logfile != null){
                     long time_ms = endtime - begintime;
                     JSONObject jo = new JSONObject();
                     jo.put("iteration",i);
@@ -218,6 +136,7 @@ public class CfrPlusRiverSolver extends Solver{
                     fileWriter.write(String.format("%s\n",jo));
                 }
                 begintime = System.currentTimeMillis();
+                if (solveConfig.stopExploitability > expliotibility) break;
             }
         }
         fileWriter.flush();
@@ -256,8 +175,8 @@ public class CfrPlusRiverSolver extends Solver{
     }
 
     float[] getCardsWeights(int player,float[] oppo_reach_probs,long current_board){
-        PrivateCards[] playerPrivateCard = this.ranges[player];
-        PrivateCards[] oppoPrivateCard = this.ranges[1 - player];
+        PrivateCards[] playerPrivateCard = this.solveConfig.ranges[player];
+        PrivateCards[] oppoPrivateCard = this.solveConfig.ranges[1 - player];
         // 二维数组替代品 ，对应二维数组 float[playerPrivateCard.length][52]
         float[] card_weight = new float[playerPrivateCard.length * 52];
         float oppo_reach_sum = 0;
@@ -279,7 +198,7 @@ public class CfrPlusRiverSolver extends Solver{
 
             float totalWeight = 0;
 
-            for(Card one_card: this.deck.getCards()){
+            for(Card one_card: this.solveConfig.deck.getCards()){
                 int card = one_card.getCardInt();
                 long card_long = Card.boardCard2long(one_card);
                 if(Card.boardsHasIntercept(card_long,current_board)
@@ -297,7 +216,7 @@ public class CfrPlusRiverSolver extends Solver{
                 totalWeight += weight;
             }
 
-            for(Card one_card:this.deck.getCards()){
+            for(Card one_card:this.solveConfig.deck.getCards()){
                 int card = one_card.getCardInt();
                 long card_long = Card.boardCard2long(one_card);
                 int card_weight_ind = hand + card * playerPrivateCard.length;
@@ -314,7 +233,7 @@ public class CfrPlusRiverSolver extends Solver{
     }
 
     float[] chanceUtility(int player,ChanceNode node,float[][]reach_probs,int iter,long current_board) throws BoardNotFoundException {
-        List<Card> cards = this.deck.getCards();
+        List<Card> cards = this.solveConfig.deck.getCards();
         if(cards.size() != node.getChildrens().size()) throw new RuntimeException();
         //float[] cardWeights = getCardsWeights(player,reach_probs[1 - player],current_board);
 
@@ -325,7 +244,7 @@ public class CfrPlusRiverSolver extends Solver{
         float[] chance_utility = new float[reach_probs[player].length];
         // 遍历每一种发牌的可能性
         int random_deal = 0,cardcount = 0;
-        if(this.monteCarolAlg==MonteCarolAlg.PUBLIC) {
+        if(this.solveConfig.monteCarolAlg==MonteCarolAlg.PUBLIC) {
             random_deal = ThreadLocalRandom.current().nextInt(1, possible_deals + 1 + 2);
         }
         for(int card = 0;card < node.getCards().size();card ++){
@@ -340,7 +259,7 @@ public class CfrPlusRiverSolver extends Solver{
             if(one_child == null || one_card == null) throw new RuntimeException("child is null");
 
             long new_board_long = current_board | card_long;
-            if(this.monteCarolAlg == MonteCarolAlg.PUBLIC){
+            if(this.solveConfig.monteCarolAlg == MonteCarolAlg.PUBLIC){
                 if(cardcount == random_deal){
                     float[][] new_reach_probs = new float[2][];
 
@@ -348,9 +267,9 @@ public class CfrPlusRiverSolver extends Solver{
                     new_reach_probs[1 - player] = new float[reach_probs[1 - player].length];
 
                     for(int one_player = 0;one_player < 2;one_player ++) {
-                        int player_hand_len = this.ranges[one_player].length;
+                        int player_hand_len = this.solveConfig.ranges[one_player].length;
                         for (int player_hand = 0; player_hand < player_hand_len; player_hand++) {
-                            PrivateCards one_private = this.ranges[one_player][player_hand];
+                            PrivateCards one_private = this.solveConfig.ranges[one_player][player_hand];
                             long privateBoardLong = one_private.toBoardLong();
                             if (Card.boardsHasIntercept(card_long, privateBoardLong)) continue;
                             new_reach_probs[one_player][player_hand] = reach_probs[one_player][player_hand];
@@ -366,8 +285,8 @@ public class CfrPlusRiverSolver extends Solver{
                 }
             }
 
-            PrivateCards[] playerPrivateCard = this.ranges[player];
-            PrivateCards[] oppoPrivateCards = this.ranges[1 - player];
+            PrivateCards[] playerPrivateCard = this.solveConfig.ranges[player];
+            PrivateCards[] oppoPrivateCards = this.solveConfig.ranges[1 - player];
 
             float[][] new_reach_probs = new float[2][];
 
@@ -379,9 +298,9 @@ public class CfrPlusRiverSolver extends Solver{
             if(oppoPrivateCards.length !=reach_probs[1 - player].length) throw new RuntimeException("length not match");
 
             for(int one_player = 0;one_player < 2;one_player ++) {
-                int player_hand_len = this.ranges[one_player].length;
+                int player_hand_len = this.solveConfig.ranges[one_player].length;
                 for (int player_hand = 0; player_hand < player_hand_len; player_hand++) {
-                    PrivateCards one_private = this.ranges[one_player][player_hand];
+                    PrivateCards one_private = this.solveConfig.ranges[one_player][player_hand];
                     long privateBoardLong = one_private.toBoardLong();
                     if (Card.boardsHasIntercept(card_long, privateBoardLong)) continue;
                     new_reach_probs[one_player][player_hand] = reach_probs[one_player][player_hand] / possible_deals;
@@ -397,7 +316,7 @@ public class CfrPlusRiverSolver extends Solver{
                 chance_utility[i] += child_utility[i];
         }
 
-        if(this.monteCarolAlg == MonteCarolAlg.PUBLIC) {
+        if(this.solveConfig.monteCarolAlg == MonteCarolAlg.PUBLIC) {
             throw new RuntimeException("not possible");
         }
         return chance_utility;
@@ -405,15 +324,15 @@ public class CfrPlusRiverSolver extends Solver{
 
     float[] actionUtility(int player,ActionNode node,float[][]reach_probs,int iter,long current_board) throws BoardNotFoundException{
         int oppo = 1 - player;
-        PrivateCards[] node_player_private_cards = this.ranges[node.getPlayer()];
+        PrivateCards[] node_player_private_cards = this.solveConfig.ranges[node.getPlayer()];
         Trainable trainable = node.getTrainable();
 
-        float[] payoffs = new float[this.ranges[player].length];
+        float[] payoffs = new float[this.solveConfig.ranges[player].length];
         List<GameTreeNode> children =  node.getChildrens();
         List<GameActions> actions =  node.getActions();
 
         float[] current_strategy = trainable.getcurrentStrategy();
-        if(this.debug){
+        if(this.solveConfig.debug){
             for(float one_strategy:current_strategy){
                 if(one_strategy != one_strategy) {
                     System.out.println(Arrays.toString(current_strategy));
@@ -421,7 +340,7 @@ public class CfrPlusRiverSolver extends Solver{
                 }
 
             }
-            for(int one_player = 0;one_player < this.player_number;one_player ++){
+            for(int one_player = 0;one_player < this.solveConfig.player_number;one_player ++){
                 float[] one_reach_prob = reach_probs[one_player];
                 for(float one_prob:one_reach_prob){
                     if(one_prob != one_prob)
@@ -429,7 +348,7 @@ public class CfrPlusRiverSolver extends Solver{
                 }
             }
         }
-        float[][] new_reach_prob = new float[this.player_number][];
+        float[][] new_reach_prob = new float[this.solveConfig.player_number][];
         if (current_strategy.length != actions.size() * node_player_private_cards.length) {
             node.printHistory();
             throw new RuntimeException(String.format(
@@ -504,8 +423,8 @@ public class CfrPlusRiverSolver extends Solver{
         int oppo = 1 - player;
         float win_payoff = node.get_payoffs(ShowdownNode.ShowDownResult.NOTTIE,player)[player].floatValue();
         float lose_payoff = node.get_payoffs(ShowdownNode.ShowDownResult.NOTTIE,oppo)[player].floatValue();
-        PrivateCards[] player_private_cards = this.ranges[player];
-        PrivateCards[] oppo_private_cards = this.ranges[oppo];
+        PrivateCards[] player_private_cards = this.solveConfig.ranges[player];
+        PrivateCards[] oppo_private_cards = this.solveConfig.ranges[oppo];
 
         RiverCombs[] player_combs = this.rrm.getRiverCombos(player,player_private_cards,current_board);
         RiverCombs[] oppo_combs = this.rrm.getRiverCombos(oppo,oppo_private_cards,current_board);
@@ -519,7 +438,7 @@ public class CfrPlusRiverSolver extends Solver{
         int j = 0;
         //if(player_combs.length != oppo_combs.length) throw new RuntimeException("");
 
-        if(this.debug){
+        if(this.solveConfig.debug){
             System.out.println("[PRESHOWDOWN]=======================");
             System.out.println(String.format("player0 reach_prob %s",Arrays.toString(reach_probs[0])));
             System.out.println(String.format("player1 reach_prob %s",Arrays.toString(reach_probs[1])));
@@ -538,12 +457,12 @@ public class CfrPlusRiverSolver extends Solver{
             while (j < oppo_combs.length && one_player_comb.rank < oppo_combs[j].rank){
                 RiverCombs one_oppo_comb = oppo_combs[j];
                 winsum += reach_probs[oppo][one_oppo_comb.reach_prob_index];
-                if(this.debug) {
+                if(this.solveConfig.debug) {
                     if (one_player_comb.reach_prob_index == 0) {
                         System.out.print(String.format("[%s]%s:%s-%s(%s) "
                                 ,j
                                 ,one_oppo_comb.private_cards.toString()
-                                ,this.ranges[oppo][one_oppo_comb.reach_prob_index].weight
+                                ,this.solveConfig.ranges[oppo][one_oppo_comb.reach_prob_index].weight
                                 ,winsum
                                 ,one_oppo_comb.rank
                         ));
@@ -554,7 +473,7 @@ public class CfrPlusRiverSolver extends Solver{
                 card_winsum[one_oppo_comb.private_cards.card2] += reach_probs[oppo][one_oppo_comb.reach_prob_index];
                 j ++;
             }
-            if(this.debug){
+            if(this.solveConfig.debug){
                 System.out.println(String.format("Before Adding %s, win_payoff %s winsum %s, subcard1 %s subcard2 %s"
                         ,payoffs[one_player_comb.reach_prob_index]
                         ,win_payoff
@@ -567,7 +486,7 @@ public class CfrPlusRiverSolver extends Solver{
                     - card_winsum[one_player_comb.private_cards.card1]
                     - card_winsum[one_player_comb.private_cards.card2]
             ) * win_payoff;
-            if(this.debug) {
+            if(this.solveConfig.debug) {
                 if (one_player_comb.reach_prob_index == 0) {
                     System.out.println(String.format("winsum %s",winsum));
                 }
@@ -585,11 +504,11 @@ public class CfrPlusRiverSolver extends Solver{
             while (j >= 0 && one_player_comb.rank > oppo_combs[j].rank){
                 RiverCombs one_oppo_comb = oppo_combs[j];
                 losssum += reach_probs[oppo][one_oppo_comb.reach_prob_index];
-                if(this.debug) {
+                if(this.solveConfig.debug) {
                     if (one_player_comb.reach_prob_index == 0) {
                         System.out.print(String.format("lose %s:%s "
                                 ,one_oppo_comb.private_cards.toString()
-                                ,this.ranges[oppo][one_oppo_comb.reach_prob_index].weight
+                                ,this.solveConfig.ranges[oppo][one_oppo_comb.reach_prob_index].weight
                         ));
                     }
                 }
@@ -598,20 +517,20 @@ public class CfrPlusRiverSolver extends Solver{
                 card_losssum[one_oppo_comb.private_cards.card2] += reach_probs[oppo][one_oppo_comb.reach_prob_index];
                 j --;
             }
-            if(this.debug) {
+            if(this.solveConfig.debug) {
                 System.out.println(String.format("Before Substract %s", payoffs[one_player_comb.reach_prob_index]));
             }
             payoffs[one_player_comb.reach_prob_index] += (losssum
                     - card_losssum[one_player_comb.private_cards.card1]
                     - card_losssum[one_player_comb.private_cards.card2]
             ) * lose_payoff;
-            if(this.debug) {
+            if(this.solveConfig.debug) {
                 if (one_player_comb.reach_prob_index == 0) {
                     System.out.println(String.format("losssum %s",losssum));
                 }
             }
         }
-        if(this.debug) {
+        if(this.solveConfig.debug) {
             System.out.println();
             System.out.println("[SHOWDOWN]============");
             node.printHistory();
@@ -649,7 +568,7 @@ public class CfrPlusRiverSolver extends Solver{
             oppo_sum += reach_prob[oppo][i];
         }
 
-        if(this.debug) {
+        if(this.solveConfig.debug) {
             System.out.println("[PRETERMINAL]============");
         }
         for(int i = 0;i < player_hand.length;i ++){
@@ -670,14 +589,14 @@ public class CfrPlusRiverSolver extends Solver{
                     - oppo_card_sum[one_player_hand.card2]
                     + plus_reach_prob
                     );
-            if(this.debug) {
+            if(this.solveConfig.debug) {
                 System.out.println(String.format("oppo_card_sum1 %s ", oppo_card_sum[one_player_hand.card1]));
                 System.out.println(String.format("oppo_card_sum2 %s ", oppo_card_sum[one_player_hand.card2]));
                 System.out.println(String.format("reach_prob i %s ", plus_reach_prob));
             }
         }
 
-        if(this.debug) {
+        if(this.solveConfig.debug) {
             System.out.println("[TERMINAL]============");
             node.printHistory();
             System.out.println(String.format("PPPayoffs: %s",player_payoff));
