@@ -1,5 +1,7 @@
 package icybee.solver.nodes;
 
+import org.json.JSONObject;
+
 /**
  * Created by huangxuefeng on 2019/10/7.
  * This file contains implemtation for showdown node, Where each remaining player show thrir holecard, winner take all.
@@ -36,6 +38,15 @@ public class ShowdownNode extends GameTreeNode{
     @Override
     public GameTreeNodeType getType() {
         return GameTreeNodeType.SHOWDOWN;
+    }
+
+    @Override
+    public JSONObject toJson() {
+        return null;
+    }
+
+    public static ShowdownNode fromJson(JSONObject json) {
+        return null;
     }
 
 }

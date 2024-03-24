@@ -422,8 +422,7 @@ public class SolverGui {
         System.out.println("saving train result to " + filename);
 
         JSONObject trainResult = new JSONObject();
-        JSONObject strategy = game_tree.dumps(false);
-        trainResult.put("game_tree", strategy);
+        trainResult.put("game_tree", game_tree.toJson());
         trainResult.put("solve_config", solveConfig.toJson());
         trainResult.put("tree_settings", treeSettings.toJson());
         File output_file = new File(filename);
@@ -526,7 +525,7 @@ public class SolverGui {
 
         /*
         String output_strategy_file = "out/demo.json";
-        String strategy_json = solver.getTree().dumps(false).toJSONString();
+        String strategy_json = solver.getTree().toJson().toJSONString();
         File output_file = new File(output_strategy_file);
         FileWriter writer = new FileWriter(output_file);
         writer.write(strategy_json);

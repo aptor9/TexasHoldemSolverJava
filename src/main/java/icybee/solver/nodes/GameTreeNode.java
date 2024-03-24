@@ -1,5 +1,7 @@
 package icybee.solver.nodes;
 
+import org.json.JSONObject;
+
 /**
  * Created by huangxuefeng on 2019/10/7.
  * This class contains code of the game tree's node
@@ -127,4 +129,19 @@ public abstract class GameTreeNode {
     }
 
     public abstract GameTreeNodeType getType();
+
+    public abstract JSONObject toJson();
+
+    public static GameTreeNode fromJson(JSONObject json) {
+        if (json.getString("node_type").equals("action_node")) {
+            return ActionNode.fromJson(json);
+        } else if (json.getString("node_type").equals("chance_node")) {
+            return ChanceNode.fromJson(json);
+        } else if (json.getString("node_type").equals("terminal_node")) {
+            return TerminalNode.fromJson(json);
+        } else if (json.getString("node_type").equals("showdown_node")) {
+            return ShowdownNode.fromJson(json);
+        }
+        throw new RuntimeException("Unknown node_type: " + json.getString("node_type"));
+    }
 }

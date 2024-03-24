@@ -1,7 +1,9 @@
 package icybee.solver.nodes;
 
 import icybee.solver.trainable.Trainable;
+import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -60,5 +62,42 @@ public class ActionNode extends GameTreeNode{
         return GameTreeNodeType.ACTION;
     }
 
+    @Override
+    public JSONObject toJson() {
+        JSONObject retjson = new JSONObject();
+
+        List<String> actions_str = new ArrayList<>();
+        for(GameActions one_action:this.getActions()) actions_str.add(one_action.toString());
+
+        retjson.put("actions",actions_str);
+        retjson.put("player",this.getPlayer());
+
+        JSONObject childrens = null;
+
+        for(int i = 0;i < this.getActions().size();i ++){
+            GameActions one_action = this.getActions().get(i);
+            GameTreeNode one_child = this.getChildrens().get(i);
+
+            JSONObject one_json = one_child.toJson();
+            if(one_json != null){
+                if(childrens == null) childrens = new JSONObject();
+                childrens.put(one_action.toString(),one_json);
+            }
+        }
+        if(childrens != null) {
+            retjson.put("childrens", childrens);
+        }
+        JSONObject strategy = this.getTrainable().dumps(false);
+        for(String key : strategy.keySet())
+        {
+            retjson.put(key, strategy.get(key));
+        }
+        retjson.put("node_type","action_node");
+        return retjson;
+    }
+
+    public static ActionNode fromJson(JSONObject json) {
+        return null;
+    }
 
 }

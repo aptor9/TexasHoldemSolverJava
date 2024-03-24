@@ -1,5 +1,6 @@
 package icybee.solver;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import org.json.JSONObject;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import icybee.solver.exceptions.ActionNotFoundException;
@@ -33,13 +34,6 @@ public class GameTree {
 
     public GameTreeNode getRoot() {
         return root;
-    }
-
-    private static String readAllBytes(String filePath) throws IOException
-    {
-        String content;
-        content = new String ( Files.readAllBytes( Paths.get(filePath) ) );
-        return content;
     }
 
     GameTreeNode.GameRound intToGameRound(int round){
@@ -369,7 +363,7 @@ public class GameTree {
         this.tree_json_dir = tree_json_dir;
         ObjectMapper mapper = new ObjectMapper();
 
-        String file_content = readAllBytes(tree_json_dir);
+        String file_content = new String(Files.readAllBytes( Paths.get(tree_json_dir) ));
         Map<String, Map> json_map = (Map<String, Map>)mapper.readValue(file_content, Map.class);
         Map<String, Map> json_root = (Map<String, Map>)json_map.get("root");
         this.deck = deck;
@@ -906,4 +900,7 @@ public class GameTree {
         return this.reConvertJson(this.root);
     }
 
+    public JSONObject toJson(){
+        return root.toJson();
+    }
 }
