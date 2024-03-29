@@ -2,10 +2,8 @@ package icybee.solver.solver;
 
 import org.json.JSONObject;
 import icybee.solver.Card;
-import icybee.solver.Deck;
 import icybee.solver.GameTree;
 import icybee.solver.RiverRangeManager;
-import icybee.solver.compairer.Compairer;
 import icybee.solver.nodes.*;
 import icybee.solver.ranges.PrivateCards;
 import icybee.solver.ranges.PrivateCardsManager;
@@ -163,15 +161,15 @@ public class ParallelCfrPlusSolver extends Solver{
                 long time_ms = endtime - begintime;
                 System.out.println(String.format("time used: %.2fs",(float)time_ms / 1000));
                 System.out.println("-------------------");
-                float expliotibility = br.printExploitability(tree.getRoot(), i + 1, tree.getRoot().getPot().floatValue(), solveConfig.initial_board_long);
+                float exploitability = br.printExploitability(tree.getRoot(), i + 1, tree.getRoot().getPot().floatValue(), solveConfig.initial_board_long);
                 if(this.solveConfig.logfile != null){
                     JSONObject jo = new JSONObject();
                     jo.put("iteration",i);
-                    jo.put("exploitibility",expliotibility);
+                    jo.put("exploitability",exploitability);
                     jo.put("time_ms",time_ms);
                     if(this.solveConfig.logfile != null) fileWriter.write(String.format("%s\n",jo));
                 }
-                if (stopExploitability > expliotibility) break;
+                if (stopExploitability > exploitability) break;
                 //begintime = System.currentTimeMillis();
             }
         }
@@ -239,7 +237,7 @@ public class ParallelCfrPlusSolver extends Solver{
         }
 
         float[] chanceUtility(int player,ChanceNode node,float[][]reach_probs,int iter,long current_board){
-            List<Card> cards = this.solver_env.solveConfig.deck.getCards();
+            List<Card> cards = node.getCards();
             if(cards.size() != node.getChildrens().size()) throw new RuntimeException();
             //float[] cardWeights = getCardsWeights(player,reach_probs[1 - player],current_board);
 
@@ -298,6 +296,7 @@ public class ParallelCfrPlusSolver extends Solver{
                 PrivateCards[] oppoPrivateCards = this.solver_env.solveConfig.ranges[1 - player];
 
                 float[][] new_reach_probs = new float[2][];
+
 
                 new_reach_probs[player] = new float[playerPrivateCard.length];
                 new_reach_probs[1 - player] = new float[oppoPrivateCards.length];
@@ -442,6 +441,7 @@ public class ParallelCfrPlusSolver extends Solver{
                         //action_utilities = this.solver_env.forkJoinPool.invoke(task);
                         action_utilities = task.join();
                     }catch(Exception e){
+                        e.printStackTrace();
                         throw new RuntimeException("future get error");
                     }
                 }else{
@@ -488,7 +488,7 @@ public class ParallelCfrPlusSolver extends Solver{
                 if(trainable instanceof DiscountedCfrTrainable){
                     DiscountedCfrTrainable dct =  (DiscountedCfrTrainable) trainable;
                     dct.setEvs(payoffs);
-                    dct.setReach_probs(reach_probs);
+                    dct.setReachProbs(reach_probs);
                 }
             }
             //if(this.solver_env.debug && player == node.getPlayer()) {

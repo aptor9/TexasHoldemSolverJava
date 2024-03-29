@@ -232,11 +232,11 @@ public class SolverResult {
             return;
         }
         actionNode = (ActionNode)global_node_desc.node;
-        DiscountedCfrTrainable dct = (DiscountedCfrTrainable) actionNode.getTrainable();
+        DiscountedCfrTrainable trainable = (DiscountedCfrTrainable) actionNode.getTrainable();
         int player = actionNode.getPlayer();
-        float[] reach_probs = dct.getReach_probs()[player];
-        float[] evs = dct.getEvs();
-        float[] strategy = dct.getAverageStrategy();
+        float[] reach_probs = trainable.getReachProbs()[player];
+        float[] evs = trainable.getEvs();
+        float[] strategy = trainable.getAverageStrategy();
         assert(evs.length == reach_probs.length);
 
         float total_sum = 0;
@@ -244,8 +244,8 @@ public class SolverResult {
         float[] global_strategy = new float[action_number];
         float[] combos = new float[action_number];
         for (int action_id = 0;action_id < action_number;action_id ++) {
-            for(int private_id = 0;private_id < dct.getPrivateCards().length;private_id ++) {
-                int index = action_id * dct.getPrivateCards().length + private_id;
+            for(int private_id = 0;private_id < trainable.getPrivateCards().length;private_id ++) {
+                int index = action_id * trainable.getPrivateCards().length + private_id;
                 float current_sum = strategy[index] * reach_probs[private_id];
                 total_sum += current_sum;
                 global_strategy[action_id] += current_sum;
@@ -413,7 +413,7 @@ public class SolverResult {
             ActionNode actionNode = (ActionNode) node;
             DiscountedCfrTrainable trainable = (DiscountedCfrTrainable) actionNode.getTrainable();
             float[] strategy = trainable.getAverageStrategy();
-            float[][] reach_prob = trainable.getReach_probs();
+            float[][] reach_prob = trainable.getReachProbs();
             List<GameActions> actions = actionNode.getActions();
             this.actions = actions;
             PrivateCards[] cards = trainable.getPrivateCards();
@@ -585,11 +585,11 @@ public class SolverResult {
         float[] evs = trainable.getEvs();
         List<GameActions> actions = actionNode.getActions();
         PrivateCards[] cards = trainable.getPrivateCards();
-        float[][] reach_probs = trainable.getReach_probs();
+        float[][] reach_probs = trainable.getReachProbs();
 
         if(showType == ShowType.STRATEGY) {
             List<DetailStrategyInfo> infos = new ArrayList<DetailStrategyInfo>();
-            float norm_ev = sum(trainable.getReach_probs()[player]);
+            float norm_ev = sum(trainable.getReachProbs()[player]);
 
             for (int i = 0; i < cards.length; i++) {
                 PrivateCards one_private_card = cards[i];

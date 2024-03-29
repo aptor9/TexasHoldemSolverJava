@@ -5,6 +5,7 @@ import icybee.solver.compairer.Dic5Compairer;
 import icybee.solver.solver.GameTreeBuildingSettings;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by huangxuefeng on 2019/10/6.
@@ -36,7 +37,7 @@ public class SolverEnvironment {
         }
 
         if(this.config.tree_builder){
-            this.game_tree = new GameTree(this.config.tree_builder_json,this.deck);
+            this.game_tree = new GameTree(this.config.tree_builder_json,this.deck, "");
         }
         if(this.config.solver_type.equals("cfrplus")){
             //solver = new CfrPlusRiverSolver(game_tree);
@@ -46,7 +47,7 @@ public class SolverEnvironment {
 
     public static GameTree gameTreeFromConfig(Config config,Deck deck){
         try {
-            return new GameTree(config.tree_builder_json, deck);
+            return new GameTree(config.tree_builder_json, deck, "");
         }catch(IOException e){
             throw new RuntimeException();
         }
@@ -54,6 +55,7 @@ public class SolverEnvironment {
 
     public static GameTree gameTreeFromParams(
             Deck deck,
+            String board,
             float oop_commit,
             float ip_commit,
             int current_round,
@@ -64,7 +66,7 @@ public class SolverEnvironment {
             GameTreeBuildingSettings gameTreeBuildingSettings
             ){
         try {
-            return new GameTree(deck,oop_commit,ip_commit,current_round,raise_limit,small_blind,big_blind,stack,gameTreeBuildingSettings);
+            return new GameTree(deck,board,oop_commit,ip_commit,current_round,raise_limit,small_blind,big_blind,stack,gameTreeBuildingSettings);
         }catch(IOException e){
             throw new RuntimeException();
         }
@@ -72,7 +74,7 @@ public class SolverEnvironment {
 
     public static GameTree gameTreeFromJson(String json_path,Deck deck){
         try {
-            return new GameTree(json_path, deck);
+            return new GameTree(json_path, deck, "");
         }catch(IOException e){
             throw new RuntimeException();
         }

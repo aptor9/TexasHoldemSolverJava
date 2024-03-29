@@ -1,5 +1,6 @@
 package icybee.solver.nodes;
 
+import icybee.solver.Card;
 import icybee.solver.trainable.Trainable;
 import org.json.JSONObject;
 
@@ -15,17 +16,23 @@ public class ActionNode extends GameTreeNode{
     List<GameActions> actions;
     List<GameTreeNode> childrens;
 
+    List<Card> boardCards;
 
     Trainable trainable;
 
     int player;
 
     public ActionNode(List<GameActions> actions, List<GameTreeNode> childrens, int player, GameRound round,Double pot,GameTreeNode parent){
+        this(actions, childrens, player, round, pot, parent, List.of());
+    }
+
+    public ActionNode(List<GameActions> actions, List<GameTreeNode> childrens, int player, GameRound round,Double pot,GameTreeNode parent, List<Card> boardCards){
         super(round,pot,parent);
         assert(actions.size() == childrens.size());
         this.actions = actions;
         this.childrens = childrens;
         this.player = player;
+        this.boardCards = boardCards;
     }
 
     public List<GameActions> getActions() {
@@ -69,6 +76,7 @@ public class ActionNode extends GameTreeNode{
         List<String> actions_str = new ArrayList<>();
         for(GameActions one_action:this.getActions()) actions_str.add(one_action.toString());
 
+        retjson.put("round", round.toString());
         retjson.put("actions",actions_str);
         retjson.put("player",this.getPlayer());
 
@@ -98,6 +106,11 @@ public class ActionNode extends GameTreeNode{
 
     public static ActionNode fromJson(JSONObject json) {
         return null;
+//        JSONObject strategy = json.getJSONObject("strategy");
+//        for (String sKey : strategy.keySet()) {
+//
+//        }
+//        return strategy;
     }
 
 }

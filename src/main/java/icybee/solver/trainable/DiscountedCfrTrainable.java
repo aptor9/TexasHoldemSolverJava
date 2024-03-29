@@ -46,7 +46,7 @@ public class DiscountedCfrTrainable extends Trainable{
         return cum_r_plus_sum;
     }
 
-    public float[][] getReach_probs() {
+    public float[][] getReachProbs() {
         return reach_probs;
     }
 
@@ -57,7 +57,7 @@ public class DiscountedCfrTrainable extends Trainable{
 
     float[] regrets = null;
 
-    public void setReach_probs(float[][] reach_probs) {
+    public void setReachProbs(float[][] reach_probs) {
         this.reach_probs = reach_probs;
     }
 
@@ -186,23 +186,32 @@ public class DiscountedCfrTrainable extends Trainable{
                 one_action.toString()
         );
 
+        JSONObject evs = new JSONObject();
+        float[] expected_values = this.getEvs();
+
+        JSONObject reach_probability = new JSONObject();
+        float[][] reach_probs = this.getReachProbs();
+        if (reach_probs == null) {
+            throw new RuntimeException("reach_probs is null");
+        }
         for(int i = 0;i < this.privateCards.length;i ++){
             PrivateCards one_private_card = this.privateCards[i];
             float[] one_strategy = new float[this.action_number];
-
 
             for(int j = 0;j < this.action_number;j ++){
                 int strategy_index = j * this.privateCards.length + i;
                 one_strategy[j] = average_strategy[strategy_index];
             }
-            strategy.put(String.format("%s",one_private_card.toString()),
-                    one_strategy
-                    );
+            strategy.put(one_private_card.toString(), one_strategy);
+            reach_probability.put(one_private_card.toString(), reach_probs[this.action_node.getPlayer()][i]);
+            evs.put(one_private_card.toString(), expected_values[i]);
         }
 
         JSONObject retjson = new JSONObject();
         retjson.put("actions",actions_str);
         retjson.put("strategy",strategy);
+        retjson.put("reach_probs", reach_probability);
+        retjson.put("evs", evs);
         return retjson;
     }
 }

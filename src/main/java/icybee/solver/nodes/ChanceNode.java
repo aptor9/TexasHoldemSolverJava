@@ -6,6 +6,7 @@ import org.json.JSONObject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * Created by huangxuefeng on 2019/10/7.
@@ -23,19 +24,27 @@ public class ChanceNode extends GameTreeNode{
 
     boolean donk;
 
-    public ChanceNode(List<GameTreeNode> childrens, GameRound round, Double pot, GameTreeNode parent, List<Card> cards,boolean donk){
+    public ChanceNode(List<GameTreeNode> childrens, GameRound round, Double pot, GameTreeNode parent, List<Card> cards,List<Card> board, boolean donk){
         super(round,pot,parent);
         this.childrens = childrens;
-        this.cards = cards;
+        this.cards = cards.stream().filter(card -> {
+            for (Card boardCard : board) {
+                if (card.equals(boardCard)) {
+                    return false;
+                }
+            }
+            return true;
+        }).collect(Collectors.toList());
         this.donk = donk;
         //if(childrens.size() != cards.size()) throw new RuntimeException("Card and childern length not match");
     }
 
-    public ChanceNode(List<GameTreeNode> childrens, GameRound round, Double pot, GameTreeNode parent, List<Card> cards){
-        super(round,pot,parent);
-        this.childrens = childrens;
-        this.cards = cards;
-        this.donk = false;
+//    public ChanceNode(List<GameTreeNode> childrens, GameRound round, Double pot, GameTreeNode parent, List<Card> cards){
+//        this(childrens, round, pot, parent, cards, List.of());
+//    }
+
+    public ChanceNode(List<GameTreeNode> childrens, GameRound round, Double pot, GameTreeNode parent, List<Card> cards, List<Card> board){
+        this(childrens, round, pot, parent, cards, board, false);
         //if(childrens.size() != cards.size()) throw new RuntimeException("Card and childern length not match");
     }
 

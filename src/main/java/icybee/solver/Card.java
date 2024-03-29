@@ -21,6 +21,14 @@ public class Card {
         this.card = card;
     }
 
+    @Override
+    public boolean equals(Object other) {
+        if (other instanceof Card) {
+            return this.getCardInt() == ((Card) other).getCardInt();
+        }
+        return false;
+    }
+
     public int getCardInt(){
         return Card.strCard2int(this.card);
     }

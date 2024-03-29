@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -100,7 +101,7 @@ public class GameTree {
 
     }
 
-    ActionNode generateActionNode(Map meta,List<String> childrens_actions, List<Map> childrens_nodes, String round,GameTreeNode parent){
+    ActionNode generateActionNode(Map meta,List<String> childrens_actions, List<Map> childrens_nodes, String round,GameTreeNode parent, List<Card> board){
         if(childrens_actions.size() != childrens_nodes.size()){
             throw new NodeLengthMismatchException(
                     String.format(
@@ -164,7 +165,7 @@ public class GameTree {
                     }
                 }
             }// end of switch
-            GameTreeNode one_children_node = recurrentGenerateTreeNode(one_children_map,parent);
+            GameTreeNode one_children_node = recurrentGenerateTreeNode(one_children_map,parent,board);
             childrens.add(one_children_node);
 
             GameActions game_action = new GameActions(action,amount);
@@ -179,7 +180,7 @@ public class GameTree {
                     ,actions.size()));
         }
         GameTreeNode.GameRound game_round = strToGameRound(round);
-        ActionNode actionNode = new ActionNode(actions,childrens,player,game_round,pot,parent);
+        ActionNode actionNode = new ActionNode(actions,childrens,player,game_round,pot,parent,board);
         for(GameTreeNode one_node: childrens){
             one_node.setParent(actionNode);
         }
@@ -255,16 +256,24 @@ public class GameTree {
         return new TerminalNode(player_payoff,player,game_round,pot,parent);
     }
 
-    ChanceNode generateChanceNode(Map meta,Map child,String round,GameTreeNode parent){
+    ChanceNode generateChanceNode(Map meta,Map child,String round,GameTreeNode parent, List<Card> board){
         //节点上的下注额度
         Double pot = this.getValue(meta,"pot");
         List<GameTreeNode> childrens = new ArrayList<>();
-        for(Card one_card:this.deck.getCards()){
-            GameTreeNode one_node = recurrentGenerateTreeNode(child,null);
+        List<Card> possible_cards = this.deck.getCards().stream().filter(card -> {
+            for (Card boardCard : board) {
+                if (card.equals(boardCard)) {
+                    return false;
+                }
+            }
+            return true;
+        }).collect(Collectors.toList());
+        for(Card one_card:possible_cards){
+            GameTreeNode one_node = recurrentGenerateTreeNode(child,null, board);
             childrens.add(one_node);
         }
         GameTreeNode.GameRound game_round = strToGameRound(round);
-        ChanceNode chanceNode = new ChanceNode(childrens,game_round,pot,parent,this.deck.getCards());
+        ChanceNode chanceNode = new ChanceNode(childrens,game_round,pot,parent,this.deck.getCards(),board);
         for(GameTreeNode gameTreeNode: chanceNode.getChildrens()){
             gameTreeNode.setParent(chanceNode);
         }
@@ -293,7 +302,7 @@ public class GameTree {
         return node.subtree_size;
     }
 
-    GameTreeNode recurrentGenerateTreeNode(Map<String, Map> node_json,GameTreeNode parent) throws NullPointerException{
+    GameTreeNode recurrentGenerateTreeNode(Map<String, Map> node_json,GameTreeNode parent,List<Card> board) throws NullPointerException{
         Map<String,Object> meta = node_json.get("meta");
         if(meta == null){
             throw new NullPointerException("node json get meta null pointer");
@@ -340,7 +349,7 @@ public class GameTree {
                 if (childrens.size() != childrens_actions.size()) {
                     throw new NodeLengthMismatchException("action node child length mismatch");
                 }
-                return this.generateActionNode(meta, childrens_actions, childrens, round,parent);
+                return this.generateActionNode(meta, childrens_actions, childrens, round,parent, board);
             }
             case "Showdown": {
                 return this.generateShowdownNode(meta, round,parent);
@@ -351,7 +360,7 @@ public class GameTree {
             case "Chance": {
                 List<Map> childrens = (List<Map>) node_json.get("children");
                 if(childrens.size() != 1) throw new RuntimeException("Chance node should have only one child");
-                return this.generateChanceNode(meta, childrens.get(0), round,parent);
+                return this.generateChanceNode(meta, childrens.get(0), round,parent,board);
             }
             default:{
                 throw new NodeNotFoundException(String.format("node type %s not found",node_type));
@@ -359,7 +368,7 @@ public class GameTree {
         }
     }
 
-    public GameTree(String tree_json_dir,Deck deck) throws IOException{
+    public GameTree(String tree_json_dir,Deck deck, String board) throws IOException{
         this.tree_json_dir = tree_json_dir;
         ObjectMapper mapper = new ObjectMapper();
 
@@ -367,7 +376,8 @@ public class GameTree {
         Map<String, Map> json_map = (Map<String, Map>)mapper.readValue(file_content, Map.class);
         Map<String, Map> json_root = (Map<String, Map>)json_map.get("root");
         this.deck = deck;
-        this.root = recurrentGenerateTreeNode(json_root,null);
+        List<Card> boardCards = Arrays.stream(board.split(",")).map(Card::new).collect(Collectors.toList());
+        this.root = recurrentGenerateTreeNode(json_root,null, boardCards);
         this.recurrentSetDepth(this.root,0);
     }
 
@@ -428,6 +438,7 @@ public class GameTree {
     }
 
     public GameTree(Deck deck,
+                    String board,
                     float oop_commit,
                     float ip_commit,
                     int current_round,
@@ -436,7 +447,7 @@ public class GameTree {
                     float big_blind,
                     float stack,
                     GameTreeBuildingSettings buildingSettings) throws IOException{
-        this.tree_json_dir = tree_json_dir;
+//        this.tree_json_dir = tree_json_dir;
         this.deck = deck;
         Rule rule = new Rule(deck,
             oop_commit,
@@ -447,46 +458,63 @@ public class GameTree {
             big_blind,
             stack,
             buildingSettings);
-        this.root = this.buildTree(rule);
+        this.root = this.buildTree(rule, board);
         this.recurrentSetDepth(this.root,0);
     }
 
     GameTreeNode buildTree(
-            Rule rule
+            Rule rule, String board
     ){
         int current_player = 1;
         GameTreeNode.GameRound round = intToGameRound(rule.current_round);
-        ActionNode node = new ActionNode(null,null,current_player, round, (double) rule.get_pot(),null);
-        this.__build(node,rule);
+        List<Card> boardCards = Arrays.stream(board.split(",")).map(Card::new).collect(Collectors.toList());
+        ActionNode node = new ActionNode(null,null,current_player, round, (double) rule.get_pot(),null, boardCards);
+        this.__build(node,rule,boardCards);
         return node;
     }
 
-    GameTreeNode __build(GameTreeNode node,Rule rule){
-        return this.__build(node,rule,"roundbegin",0,0);
+//    GameTreeNode __build(GameTreeNode node,Rule rule){
+//        return this.__build(node,rule,List.of());
+//    }
+    GameTreeNode __build(GameTreeNode node,Rule rule, List<Card> boardCards){
+        return this.__build(node,rule,boardCards, "roundbegin",0,0);
     }
-    GameTreeNode __build(GameTreeNode node,Rule rule,String last_action,int check_times,int raise_times){
+
+//    GameTreeNode __build(GameTreeNode node,Rule rule, String last_action,int check_times,int raise_times){
+//        return this.__build(node,rule,List.of(), last_action,check_times,raise_times);
+//    }
+
+    GameTreeNode __build(GameTreeNode node,Rule rule,List<Card> boardCards, String last_action,int check_times,int raise_times){
 
         if(node instanceof ActionNode){
-            this.buildAction((ActionNode) node,rule,last_action,check_times,raise_times);
+            this.buildAction((ActionNode) node,rule,boardCards,last_action,check_times,raise_times);
         }else if(node instanceof ShowdownNode) {
 
         }else if(node instanceof TerminalNode) {
 
         }else if(node instanceof ChanceNode) {
-            this.buildChance((ChanceNode)node,rule);
+            this.buildChance((ChanceNode)node,rule,boardCards);
         }else {
             throw new RuntimeException("node type unknown");
         }
         return node;
     }
 
-    void buildChance(ChanceNode root,Rule rule){
+    void buildChance(ChanceNode root,Rule rule,List<Card> board){
         //节点上的下注额度
         Double pot = (double)rule.get_pot();
         Rule nextrule = new Rule(rule);
         List<GameTreeNode> childrens = new ArrayList<>();
         assert(rule.current_round <= 4);
-        for(Card one_card:this.deck.getCards()){
+        List<Card> possible_cards = this.deck.getCards().stream().filter(card -> {
+            for (Card boardCard : board) {
+                if (card.equals(boardCard)) {
+                    return false;
+                }
+            }
+            return true;
+        }).collect(Collectors.toList());
+        for(Card one_card:possible_cards){
             GameTreeNode one_node;
             if(rule.oop_commit == rule.ip_commit && rule.oop_commit == rule.stack) {
                 if(rule.current_round >= 4){
@@ -504,19 +532,19 @@ public class GameTree {
                     nextrule = new Rule(rule);
                     nextrule.current_round += 1;
                     assert(nextrule.current_round <= 4);
-                    one_node = new ChanceNode(null, this.intToGameRound(rule.current_round + 1), (double) rule.get_pot(), root, rule.deck.getCards());
+                    one_node = new ChanceNode(null, this.intToGameRound(rule.current_round + 1), (double) rule.get_pot(), root, rule.deck.getCards(), board);
                 }
             }else {
                 one_node = new ActionNode(null, null, 1, this.intToGameRound(rule.current_round), (double) rule.get_pot(), root);
             }
             childrens.add(one_node);
             assert(nextrule.current_round <= 4);
-            this.__build(one_node,nextrule,"begin",0,0);
+            this.__build(one_node,nextrule,board,"begin",0,0);
         }
         root.setChildrens(childrens);
     }
 
-    void buildAction(ActionNode root,Rule rule,String last_action,int check_times,int raise_times) {
+    void buildAction(ActionNode root,Rule rule,List<Card> board,String last_action,int check_times,int raise_times) {
         int[] players = rule.players;
         // current player
         int player = root.getPlayer();
@@ -579,7 +607,7 @@ public class GameTree {
                         // 在preflop/flop/turn check 导致游戏进入下一轮
                         nextrule = new Rule(rule);
                         nextrule.current_round += 1;
-                        nextnode = new ChanceNode(null, this.intToGameRound(rule.current_round + 1), (double) rule.get_pot(), root, rule.deck.getCards());
+                        nextnode = new ChanceNode(null, this.intToGameRound(rule.current_round + 1), (double) rule.get_pot(), root, rule.deck.getCards(), board);
                     }
                 } else if (root.getParent() == null) {
                     nextrule = new Rule(rule);
@@ -588,7 +616,7 @@ public class GameTree {
                     nextrule = new Rule(rule);
                     nextnode = new ActionNode(null, null, nextplayer, this.intToGameRound(rule.current_round), (double) rule.get_pot(), root);
                 }
-                this.__build(nextnode, nextrule,"check",check_times + 1,0);
+                this.__build(nextnode, nextrule,board,"check",check_times + 1,0);
                 actions.add(new GameActions(GameTreeNode.PokerActions.CHECK,0.0));
                 childrens.add(nextnode);
             }else if (action == "bet"){
@@ -605,7 +633,7 @@ public class GameTree {
                     else if (player == 1) nextrule.oop_commit += one_betting_size;
                     else throw new RuntimeException("unknown player");
                     GameTreeNode nextnode = new ActionNode(null,null,nextplayer,this.intToGameRound(rule.current_round),(double) rule.get_pot(),root);
-                    this.__build(nextnode,nextrule,"bet",0,0);
+                    this.__build(nextnode,nextrule,board,"bet",0,0);
                     actions.add(new GameActions(GameTreeNode.PokerActions.BET,one_betting_size));
                     childrens.add(nextnode);
                 }
@@ -635,10 +663,10 @@ public class GameTree {
                     nextrule.current_round += 1;
                     boolean donk = false;
                     if(player == 1) donk = true;
-                    nextnode = new ChanceNode(null,this.intToGameRound(rule.current_round + 1),(double) rule.get_pot(),root,rule.deck.getCards(),donk);
+                    nextnode = new ChanceNode(null,this.intToGameRound(rule.current_round + 1),(double) rule.get_pot(),root,rule.deck.getCards(),board,donk);
                 }
                 assert(nextrule.current_round <= 4);
-                this.__build(nextnode,nextrule,"call",0,0);
+                this.__build(nextnode,nextrule,board,"call",0,0);
                 actions.add(new GameActions(GameTreeNode.PokerActions.CALL, (double) Math.abs(rule.oop_commit - rule.ip_commit)));
                 childrens.add(nextnode);
             }else if (action == "raise"){
@@ -657,7 +685,7 @@ public class GameTree {
                     else if (player == 1) nextrule.oop_commit += one_betting_size;
                     else throw new RuntimeException("unknown player");
                     GameTreeNode nextnode = new ActionNode(null,null,nextplayer,this.intToGameRound(rule.current_round),(double) rule.get_pot(),root);
-                    this.__build(nextnode,nextrule,"raise",0,raise_times + 1);
+                    this.__build(nextnode,nextrule,board,"raise",0,raise_times + 1);
                     actions.add(new GameActions(GameTreeNode.PokerActions.RAISE,one_betting_size));
                     childrens.add(nextnode);
                 }
@@ -671,7 +699,7 @@ public class GameTree {
                     payoffs = new Double[]{Double.valueOf(rule.oop_commit), Double.valueOf(-rule.oop_commit)};
                 }else throw new RuntimeException("unknown player");
                 GameTreeNode nextnode = new TerminalNode(payoffs,nextplayer,this.intToGameRound(rule.current_round), (double) rule.get_pot(),root);
-                this.__build(nextnode,nextrule,"fold",0,0);
+                this.__build(nextnode,nextrule,board,"fold",0,0);
                 actions.add(new GameActions(GameTreeNode.PokerActions.FOLD,0.0));
                 childrens.add(nextnode);
             }
@@ -766,11 +794,12 @@ public class GameTree {
                 recurrentPrintTree(one_child,depth + 1,depth_limit);
             }
         }else if(node instanceof ChanceNode) {
+            String cards = ((ChanceNode) node).getCards().stream().map(Card::toString).collect(Collectors.joining(","));
             String prefix = "";
             for(int j = 0;j < depth;j++) prefix += "\t";
-            System.out.println(String.format(
-                    "%sCHANCE",prefix
-            ));
+            System.out.printf(
+                    "%sCHANCE:[%s]%n",prefix,cards
+            );
             recurrentPrintTree(((ChanceNode) node).getChildrens().get(0),depth + 1,depth_limit);
         }else if(node instanceof ShowdownNode){
             ShowdownNode showdown_node = (ShowdownNode)node;

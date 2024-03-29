@@ -130,7 +130,7 @@ public class BestResponse {
     }
 
     private float[] chanceBestReponse(ChanceNode node, int player, float[][] reach_probs, long current_board) {
-        List<Card> cards = this.deck.getCards();
+        List<Card> cards = node.getCards();
         if(cards.size() != node.getChildrens().size()) throw new RuntimeException();
         //float[] cardWeights = getCardsWeights(player,reach_probs[1 - player],current_board);
 

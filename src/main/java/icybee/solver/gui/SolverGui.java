@@ -455,6 +455,7 @@ public class SolverGui {
         if(mode == 0) {
             this.game_tree = SolverEnvironment.gameTreeFromParams(
                     this.holdem_deck,
+                    board,
                     Float.valueOf(this.pot.getText()) / 2,
                     Float.valueOf(this.pot.getText()) / 2,
                     round,
@@ -467,6 +468,7 @@ public class SolverGui {
         }else if(mode == 1){
             this.game_tree = SolverEnvironment.gameTreeFromParams(
                     this.shortdeck_deck,
+                    board,
                     Float.valueOf(this.pot.getText()) / 2,
                     Float.valueOf(this.pot.getText()) / 2,
                     round,
