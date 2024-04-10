@@ -233,7 +233,8 @@ public class CfrPlusRiverSolver extends Solver{
     }
 
     float[] chanceUtility(int player,ChanceNode node,float[][]reach_probs,int iter,long current_board) throws BoardNotFoundException {
-        List<Card> cards = this.solveConfig.deck.getCards();
+//        List<Card> cards = this.solveConfig.deck.getCards();
+        List<Card> cards = node.getCards();
         if(cards.size() != node.getChildrens().size()) throw new RuntimeException();
         //float[] cardWeights = getCardsWeights(player,reach_probs[1 - player],current_board);
 

@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertTrue;
 
@@ -334,7 +335,8 @@ public class TexasHoldemSolverTest
         //String config_name = "yamls/rule_shortdeck_turnsolver_withallin.yaml";
         //String config_name = "yamls/rule_shortdeck_flopsolver.yaml";
         Config config = this.loadConfig(config_name);
-        GameTree game_tree = SolverEnvironment.gameTreeFromConfig(config, TexasHoldemSolverTest.deck);
+        String board = "As,Jh,9d,2c,9s";
+        GameTree game_tree = SolverEnvironment.gameTreeFromConfig(config, TexasHoldemSolverTest.deck, board);
 
 //        String player1RangeStr = "AA,KK,QQ,JJ,TT,99,88,77,66,AK,AQ,AJ,AT,A9,A8,A7,A6,KQ,KJ,KT,K9,K8,K7,K6,QJ,QT,Q9,Q8,Q7,Q6,JT,J9,J8,J7,J6,T9,T8,T7,T6,98,97,96,43,64,84";
 //        String player2RangeStr = "AA,KK,QQ,JJ,TT,99,88,77,66,AK,AQ,AJ,AT,A9,A8,A7,A6,KQ,KJ,KT,K9,K8,K7,K6,QJ,QT,Q9,Q8,Q7,Q6,JT,J9,J8,J7,J6,T9,T8,T7,T6,98,97,96,43,64,84";
@@ -352,13 +354,16 @@ public class TexasHoldemSolverTest
         case 's': return 3; // 黑桃
          */
 
-        int[] initialBoard = new int[]{
-                Card.strCard2int("As"),
-                Card.strCard2int("Jh"),
-                Card.strCard2int("9d"),
-                Card.strCard2int("2c"),
-                Card.strCard2int("9s")
-        };
+//        int[] initialBoard = new int[]{
+//                Card.strCard2int("As"),
+//                Card.strCard2int("Jh"),
+//                Card.strCard2int("9d"),
+//                Card.strCard2int("2c"),
+//                Card.strCard2int("9s")
+//        };
+
+        int[] initialBoard = Arrays.stream(board.split(",")).map(Card::strCard2int).mapToInt(x->x).toArray();
+
 
         PrivateCards[] player1Range = PrivateRangeConverter.rangeStr2Cards(player1RangeStr,initialBoard);
         PrivateCards[] player2Range = PrivateRangeConverter.rangeStr2Cards(player2RangeStr,initialBoard);
@@ -417,7 +422,9 @@ public class TexasHoldemSolverTest
         //String config_name = "yamls/rule_shortdeck_flopsolver.yaml";
         String config_name = "yamls/rule_holdem_flop.yaml";
         Config config = this.loadConfig(config_name);
-        GameTree game_tree = SolverEnvironment.gameTreeFromConfig(config, TexasHoldemSolverTest.deck);
+//        GameTree game_tree = SolverEnvironment.gameTreeFromConfig(config, TexasHoldemSolverTest.deck);
+        String board = "As,Jh,9d";
+        GameTree game_tree = SolverEnvironment.gameTreeFromConfig(config, TexasHoldemSolverTest.deck, board);
 
 //        String player1RangeStr = "AA,KK,QQ,JJ,TT,99,88,77,66,AK,AQ,AJ,AT,A9,A8,A7,A6,KQ,KJ,KT,K9,K8,K7,K6,QJ,QT,Q9,Q8,Q7,Q6,JT,J9,J8,J7,J6,T9,T8,T7,T6,98,97,96,43,64,84";
 //        String player2RangeStr = "AA,KK,QQ,JJ,TT,99,88,77,66,AK,AQ,AJ,AT,A9,A8,A7,A6,KQ,KJ,KT,K9,K8,K7,K6,QJ,QT,Q9,Q8,Q7,Q6,JT,J9,J8,J7,J6,T9,T8,T7,T6,98,97,96,43,64,84";
@@ -433,11 +440,13 @@ public class TexasHoldemSolverTest
         case 's': return 3; // 黑桃
          */
 
-        int[] initialBoard = new int[]{
-                Card.strCard2int("As"),
-                Card.strCard2int("Jh"),
-                Card.strCard2int("9d")
-        };
+//        int[] initialBoard = new int[]{
+//                Card.strCard2int("As"),
+//                Card.strCard2int("Jh"),
+//                Card.strCard2int("9d")
+//        };
+
+        int[] initialBoard = Arrays.stream(board.split(",")).map(Card::strCard2int).mapToInt(x->x).toArray();
 
         PrivateCards[] player1Range = PrivateRangeConverter.rangeStr2Cards(player1RangeStr,initialBoard);
         PrivateCards[] player2Range = PrivateRangeConverter.rangeStr2Cards(player2RangeStr,initialBoard);
