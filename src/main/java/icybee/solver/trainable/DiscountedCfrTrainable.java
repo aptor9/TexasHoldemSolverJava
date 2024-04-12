@@ -191,9 +191,7 @@ public class DiscountedCfrTrainable extends Trainable{
 
         JSONObject reach_probability = new JSONObject();
         float[][] reach_probs = this.getReachProbs();
-        if (reach_probs == null) {
-            throw new RuntimeException("reach_probs is null");
-        }
+
         for(int i = 0;i < this.privateCards.length;i ++){
             PrivateCards one_private_card = this.privateCards[i];
             float[] one_strategy = new float[this.action_number];
@@ -203,15 +201,23 @@ public class DiscountedCfrTrainable extends Trainable{
                 one_strategy[j] = average_strategy[strategy_index];
             }
             strategy.put(one_private_card.toString(), one_strategy);
-            reach_probability.put(one_private_card.toString(), reach_probs[this.action_node.getPlayer()][i]);
-            evs.put(one_private_card.toString(), expected_values[i]);
+            if (reach_probs != null) {
+                reach_probability.put(one_private_card.toString(), reach_probs[this.action_node.getPlayer()][i]);
+            }
+            if (expected_values != null) {
+                evs.put(one_private_card.toString(), expected_values[i]);
+            }
         }
 
         JSONObject retjson = new JSONObject();
         retjson.put("actions",actions_str);
         retjson.put("strategy",strategy);
-        retjson.put("reach_probs", reach_probability);
-        retjson.put("evs", evs);
+        if (reach_probs != null) {
+            retjson.put("reach_probs", reach_probability);
+        }
+        if (expected_values != null) {
+            retjson.put("evs", evs);
+        }
         return retjson;
     }
 }

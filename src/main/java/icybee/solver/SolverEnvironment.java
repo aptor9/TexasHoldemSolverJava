@@ -46,8 +46,12 @@ public class SolverEnvironment {
     }
 
     public static GameTree gameTreeFromConfig(Config config,Deck deck){
+        return gameTreeFromConfig(config, deck, "");
+    }
+
+    public static GameTree gameTreeFromConfig(Config config,Deck deck, String board){
         try {
-            return new GameTree(config.tree_builder_json, deck, "");
+            return new GameTree(config.tree_builder_json, deck, board);
         }catch(IOException e){
             throw new RuntimeException();
         }
